@@ -21,6 +21,9 @@ Requires Node 18+.
 
 ## What's implemented (MVP "Must have")
 
+- Bilingual UI: **Vietnamese (default)** and English, switchable anytime from
+  Profile > Language, persisted across sessions. Covers all screens, the add-bouquet
+  flow, and even the mock AI's flower names/meanings.
 - Onboarding (3 screens, skippable, replayable from Profile)
 - Home / **My Garden**: personal greeting, garden name, bouquet + species counters,
   a swipeable multi-area garden canvas with stable planting slots, empty state
@@ -28,15 +31,22 @@ Requires Node 18+.
   identification with a soft loading state -> editable review of detected flowers
   (name, color, quantity, meaning, confidence, low-confidence warning, add/remove
   flowers) -> memory form (name, date, occasion, giver, note, favorite, overall
-  meaning) -> garden placement (choose area/slot/vase/decoration, with conflict
-  resolution — swap or move the existing bouquet to Collection — or skip for later)
-  -> success feedback
+  meaning, **bouquet frame style**) -> garden placement (choose area/slot/vase/
+  decoration, with conflict resolution — swap or move the existing bouquet to
+  Collection — or skip for later) -> success feedback, with a direct **"Edit now"**
+  shortcut into the bouquet's edit mode
+- **Bouquet frames**: every bouquet photo renders inside one of six decorative
+  frame shapes (kraft paper cone, ribbon round, classic arch, hexagon, heart,
+  classic circle), chosen when saving and changeable anytime afterward. Used
+  consistently across cards, quick view, garden slots, and the detail page.
 - **Collection**: searchable, filterable (by occasion), sortable (newest/oldest) grid;
   shows placed/not-placed status
 - **Favorites**: bouquets marked favorite
-- **Bouquet detail**: botanical-journal-style view with edit, move/place, favorite,
-  delete (with confirmation)
-- **Profile**: display name / garden name, replay onboarding, reset all data
+- **Bouquet detail**: botanical-journal-style view with edit (including **changing
+  the photo and frame after saving**, not just text), move/place, favorite, delete
+  (with confirmation)
+- **Profile / Settings**: display name / garden name, **language switcher**, replay
+  onboarding, reset all data
 - Full state coverage per screen: loading, empty, error + retry, validation, low
   confidence, partial AI result, save failure, delete confirmation, camera
   permission denial with fallback, offline-safe local persistence
@@ -51,15 +61,20 @@ stats, seasonal themes, free-form drag-and-drop, premium tier.
 
 ```
 src/
+  i18n/
+    translations.ts      Flat vi/en dictionary + translate()
+    LanguageProvider.tsx  Context exposing t(), language, setLanguage (persisted)
   types/            Domain model (Bouquet, BouquetFlower, GardenArea, GardenPlacement...)
   lib/
     repository.ts   GardenRepository interface + localStorage implementation
-    aiService.ts    FlowerAIService interface + mock implementation (Zod-validated)
+    aiService.ts    FlowerAIService interface + bilingual mock implementation (Zod-validated)
     image.ts        Client-side validation + orientation-safe compression
     gardenLayout.ts Stable slot coordinates (not free drag-and-drop, by design)
   store/
     GardenProvider.tsx   Single source of truth; wraps the repository, exposes CRUD
-  components/       Presentational + interactive pieces (20+), one concern each
+  components/       Presentational + interactive pieces (20+), one concern each,
+                     including BouquetFrame (renders the 6 frame shapes) and
+                     FramePicker (the frame chooser used in the memory form)
   pages/            Route-level screens
   hooks/            useToast, useAddFlow (controls the add-bouquet overlay)
 ```
@@ -77,6 +92,26 @@ network latency, an ~12% failure rate (to exercise the retry/manual-entry UI), a
 validates its own output against a Zod schema before returning it — the same schema
 a real provider's response would need to satisfy. See "Going to production" below
 for how to swap in a real vision provider without touching any component.
+
+## Internationalization
+
+`src/i18n/translations.ts` holds a flat key -> `{ vi, en }` dictionary; `LanguageProvider`
+persists the choice to `localStorage` and exposes `t(key)`. Vietnamese is the default.
+To add a new language: add a third locale field to each dictionary entry, extend the
+`Language` union type, and add a button in Profile's language section — no other files
+need to change. The mock AI service also takes a `language` option so demo flower
+names/meanings match the UI language; a real provider integration should be prompted
+to respond in that same language.
+
+## Bouquet frames
+
+`src/components/BouquetFrame.tsx` masks a bouquet photo into one of six CSS
+`clip-path` shapes (kraft paper cone, ribbon round, classic arch, hexagon, heart,
+classic circle) with small SVG decorations (ribbon, twine) layered on top. The style
+is stored per-bouquet (`Bouquet.frameStyle`) and chosen via `FramePicker.tsx` in the
+memory form during creation, or changed anytime from the bouquet's edit mode. Adding
+a new frame shape means adding one entry to `FrameStyle`/`FRAME_STYLES` and one clip
+path in `BouquetFrame.tsx`.
 
 ## Data model
 

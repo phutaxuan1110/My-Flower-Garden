@@ -8,9 +8,11 @@ import { EmptyGardenState } from "../components/EmptyGardenState";
 import { GardenSkeleton } from "../components/LoadingSkeleton";
 import { BouquetQuickView } from "../components/BouquetQuickView";
 import { useGarden } from "../store/GardenProvider";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 export function GardenPage() {
   const { loading, profile, bouquets, gardenAreas, totalCount, speciesCount, toggleFavorite } = useGarden();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
 
@@ -44,14 +46,14 @@ export function GardenPage() {
           <div className="mx-5 mt-6 flex items-center justify-between rounded-[20px] border border-[var(--color-line)] bg-white/70 px-4 py-3">
             <div className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
               <BookHeart size={16} className="text-[var(--color-rose)]" strokeWidth={1.75} />
-              Every bouquet lives in your Collection too
+              {t("garden.collectionBanner")}
             </div>
             <button
               type="button"
               onClick={() => navigate("/collection")}
               className="min-h-[44px] shrink-0 rounded-full bg-[var(--color-blush)] px-3 text-xs font-semibold text-[var(--color-rose)]"
             >
-              View all
+              {t("garden.viewAll")}
             </button>
           </div>
         </>

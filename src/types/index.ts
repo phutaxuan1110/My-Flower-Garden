@@ -51,6 +51,7 @@ export interface Bouquet {
   overallMeaning?: string;
   isFavorite: boolean;
   detectionStatus: DetectionStatus;
+  frameStyle: FrameStyle;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,6 +77,7 @@ export interface GardenPlacement {
 
 export type VaseStyle = "clay-pot" | "glass-vase" | "woven-basket" | "tin-bucket";
 export type DecorationStyle = "none" | "sparkle" | "butterflies" | "fairy-lights" | "ribbon";
+export type FrameStyle = "kraft-cone" | "ribbon-round" | "arch" | "hexagon" | "heart" | "classic-circle";
 
 // ---- AI service contract ----
 
@@ -128,4 +130,13 @@ export const DECORATION_STYLES: { id: DecorationStyle; label: string }[] = [
   { id: "butterflies", label: "Butterflies" },
   { id: "fairy-lights", label: "Fairy lights" },
   { id: "ribbon", label: "Ribbon" },
+];
+
+export const FRAME_STYLES: FrameStyle[] = [
+  "kraft-cone",
+  "ribbon-round",
+  "arch",
+  "hexagon",
+  "heart",
+  "classic-circle",
 ];

@@ -3,15 +3,17 @@ import { Heart } from "lucide-react";
 import { BouquetCard } from "../components/BouquetCard";
 import { CollectionGridSkeleton } from "../components/LoadingSkeleton";
 import { useGarden } from "../store/GardenProvider";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 export function FavoritesPage() {
   const { loading, favoriteBouquets, toggleFavorite } = useGarden();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   return (
     <div className="px-5 pt-6">
       <h1 className="font-display text-2xl text-[var(--color-ink)]">
-        Your <em className="italic text-[var(--color-rose)]">Favorites</em>
+        {t("favorites.title")} <em className="italic text-[var(--color-rose)]">{t("favorites.titleEm")}</em>
       </h1>
       <div className="mt-5">
         {loading ? (
@@ -22,7 +24,7 @@ export function FavoritesPage() {
               <Heart size={22} strokeWidth={1.5} />
             </div>
             <p className="mt-4 max-w-[26ch] text-sm leading-relaxed text-[var(--color-muted)]">
-              Tap the heart on any bouquet to keep it close here.
+              {t("favorites.empty")}
             </p>
           </div>
         ) : (

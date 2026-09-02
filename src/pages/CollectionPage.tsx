@@ -4,12 +4,25 @@ import { Search, SlidersHorizontal, X } from "lucide-react";
 import { BouquetCard } from "../components/BouquetCard";
 import { CollectionGridSkeleton } from "../components/LoadingSkeleton";
 import { useGarden } from "../store/GardenProvider";
+import { useLanguage } from "../i18n/LanguageProvider";
 import { OCCASIONS } from "../types";
+import type { Occasion } from "../types";
+import type { TranslationKey } from "../i18n/translations";
 
 type SortMode = "newest" | "oldest";
 
+const OCCASION_KEYS: Record<Occasion, TranslationKey> = {
+  Birthday: "occasion.Birthday",
+  Anniversary: "occasion.Anniversary",
+  Graduation: "occasion.Graduation",
+  "Thank You": "occasion.Thank You",
+  "Just Because": "occasion.Just Because",
+  Custom: "occasion.Custom",
+};
+
 export function CollectionPage() {
   const { loading, bouquets, toggleFavorite } = useGarden();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [query, setQuery] = useState("");
@@ -40,7 +53,7 @@ export function CollectionPage() {
   return (
     <div className="px-5 pt-6">
       <h1 className="font-display text-2xl text-[var(--color-ink)]">
-        Your <em className="italic text-[var(--color-rose)]">Collection</em>
+        {t("collection.title")} <em className="italic text-[var(--color-rose)]">{t("collection.titleEm")}</em>
       </h1>
 
       <div className="mt-4 flex items-center gap-2">
@@ -49,12 +62,12 @@ export function CollectionPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search bouquets or flowers"
+            placeholder={t("collection.searchPlaceholder")}
             className="w-full bg-transparent py-2 text-sm text-[var(--color-ink)] outline-none placeholder:text-[var(--color-muted)]"
-            aria-label="Search bouquets"
+            aria-label={t("collection.searchPlaceholder")}
           />
           {query && (
-            <button type="button" onClick={() => setQuery("")} aria-label="Clear search">
+            <button type="button" onClick={() => setQuery("")} aria-label={t("common.close")}>
               <X size={14} className="text-[var(--color-muted)]" />
             </button>
           )}
@@ -63,7 +76,7 @@ export function CollectionPage() {
           type="button"
           onClick={() => setShowFilters((v) => !v)}
           aria-expanded={showFilters}
-          aria-label="Filter and sort"
+          aria-label={t("collection.sortBy")}
           className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${
             showFilters || occasionFilter ? "border-[var(--color-rose)] text-[var(--color-rose)]" : "border-[var(--color-line)] text-[var(--color-ink)]"
           }`}
@@ -75,7 +88,7 @@ export function CollectionPage() {
       {showFilters && (
         <div className="mt-3 space-y-3 rounded-[20px] border border-[var(--color-line)] bg-white p-4">
           <div>
-            <p className="mb-2 text-xs font-medium text-[var(--color-muted)]">Occasion</p>
+            <p className="mb-2 text-xs font-medium text-[var(--color-muted)]">{t("collection.occasion")}</p>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -84,7 +97,7 @@ export function CollectionPage() {
                   !occasionFilter ? "border-[var(--color-rose)] bg-[var(--color-rose)]/10 text-[var(--color-rose)]" : "border-[var(--color-line)] text-[var(--color-ink)]"
                 }`}
               >
-                All
+                {t("collection.filterAll")}
               </button>
               {OCCASIONS.map((o) => (
                 <button
@@ -95,26 +108,32 @@ export function CollectionPage() {
                     occasionFilter === o ? "border-[var(--color-rose)] bg-[var(--color-rose)]/10 text-[var(--color-rose)]" : "border-[var(--color-line)] text-[var(--color-ink)]"
                   }`}
                 >
-                  {o}
+                  {t(OCCASION_KEYS[o])}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <p className="mb-2 text-xs font-medium text-[var(--color-muted)]">Sort by</p>
+            <p className="mb-2 text-xs font-medium text-[var(--color-muted)]">{t("collection.sortBy")}</p>
             <div className="flex gap-2">
-              {(["newest", "oldest"] as SortMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setSortMode(mode)}
-                  className={`min-h-[36px] flex-1 rounded-full border text-xs capitalize ${
-                    sortMode === mode ? "border-[var(--color-rose)] bg-[var(--color-rose)]/10 text-[var(--color-rose)]" : "border-[var(--color-line)] text-[var(--color-ink)]"
-                  }`}
-                >
-                  {mode}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setSortMode("newest")}
+                className={`min-h-[36px] flex-1 rounded-full border text-xs ${
+                  sortMode === "newest" ? "border-[var(--color-rose)] bg-[var(--color-rose)]/10 text-[var(--color-rose)]" : "border-[var(--color-line)] text-[var(--color-ink)]"
+                }`}
+              >
+                {t("collection.sortNewest")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSortMode("oldest")}
+                className={`min-h-[36px] flex-1 rounded-full border text-xs ${
+                  sortMode === "oldest" ? "border-[var(--color-rose)] bg-[var(--color-rose)]/10 text-[var(--color-rose)]" : "border-[var(--color-line)] text-[var(--color-ink)]"
+                }`}
+              >
+                {t("collection.sortOldest")}
+              </button>
             </div>
           </div>
         </div>
@@ -124,13 +143,9 @@ export function CollectionPage() {
         {loading ? (
           <CollectionGridSkeleton />
         ) : bouquets.length === 0 ? (
-          <p className="mt-10 text-center text-sm text-[var(--color-muted)]">
-            Nothing here yet. Add your first bouquet to start your collection.
-          </p>
+          <p className="mt-10 text-center text-sm text-[var(--color-muted)]">{t("collection.emptyAll")}</p>
         ) : filtered.length === 0 ? (
-          <p className="mt-10 text-center text-sm text-[var(--color-muted)]">
-            No bouquets match your search or filters.
-          </p>
+          <p className="mt-10 text-center text-sm text-[var(--color-muted)]">{t("collection.emptyFiltered")}</p>
         ) : (
           <div className="grid grid-cols-2 gap-3 pb-6">
             {filtered.map((b) => (

@@ -23,6 +23,7 @@ interface CreateBouquetInput {
   overallMeaning?: string;
   isFavorite: boolean;
   detectionStatus: Bouquet["detectionStatus"];
+  frameStyle: Bouquet["frameStyle"];
   flowers: Omit<BouquetFlower, "id" | "bouquetId">[];
 }
 
@@ -127,6 +128,7 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
       overallMeaning: input.overallMeaning,
       isFavorite: input.isFavorite,
       detectionStatus: input.detectionStatus,
+      frameStyle: input.frameStyle,
     });
     const createdFlowers = await gardenRepository.replaceFlowers(bouquet.id, input.flowers);
     setRawBouquets((prev) => [...prev, bouquet]);

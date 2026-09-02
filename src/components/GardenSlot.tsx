@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
+import { BouquetFrame } from "./BouquetFrame";
 import type { SlotDefinition } from "../lib/gardenLayout";
 import type { BouquetWithFlowers, VaseStyle } from "../types";
 
@@ -35,7 +36,7 @@ export function GardenSlot({ slot, bouquet, vaseStyle = "clay-pot", isSelectable
       className={`absolute flex min-h-[44px] flex-col items-center transition-transform active:scale-95 ${
         isSelectable ? "cursor-pointer" : ""
       }`}
-      aria-label={bouquet ? `Open ${bouquet.name}` : "Empty planting spot"}
+      aria-label={bouquet ? bouquet.name : "Empty planting spot"}
     >
       {bouquet ? (
         <motion.div
@@ -44,16 +45,13 @@ export function GardenSlot({ slot, bouquet, vaseStyle = "clay-pot", isSelectable
           transition={{ duration: 0.45, ease: "easeOut" }}
           className="flex flex-col items-center"
         >
-          <div
-            className="overflow-hidden border-2 border-white bg-white shadow-md shadow-black/10"
-            style={{
-              width: size * 0.82,
-              height: size * 0.95,
-              borderRadius: `${size * 0.42}px ${size * 0.42}px 10px 10px`,
-            }}
-          >
-            <img src={bouquet.imageUrl} alt="" className="h-full w-full object-cover" />
-          </div>
+          <BouquetFrame
+            imageUrl={bouquet.imageUrl}
+            frameStyle={bouquet.frameStyle}
+            alt={bouquet.name}
+            className="border-2 border-white shadow-md shadow-black/10"
+            style={{ width: size * 0.82, height: size * 0.95 }}
+          />
           <span className="-mt-2 text-lg leading-none" aria-hidden="true">
             {VASE_EMOJI_FALLBACK[vaseStyle]}
           </span>

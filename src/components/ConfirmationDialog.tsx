@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 interface ConfirmationDialogProps {
   open: boolean;
@@ -15,12 +16,15 @@ export function ConfirmationDialog({
   open,
   title,
   description,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
+  confirmLabel,
+  cancelLabel,
   destructive,
   onConfirm,
   onCancel,
 }: ConfirmationDialogProps) {
+  const { t } = useLanguage();
+  const resolvedConfirm = confirmLabel ?? t("common.confirm");
+  const resolvedCancel = cancelLabel ?? t("common.cancel");
   return (
     <AnimatePresence>
       {open && (
@@ -50,7 +54,7 @@ export function ConfirmationDialog({
                 onClick={onCancel}
                 className="min-h-[44px] flex-1 rounded-full border border-[var(--color-line)] px-4 text-sm font-medium text-[var(--color-ink)] transition-colors hover:bg-[var(--color-blush)]"
               >
-                {cancelLabel}
+                {resolvedCancel}
               </button>
               <button
                 type="button"
@@ -59,7 +63,7 @@ export function ConfirmationDialog({
                   destructive ? "bg-[var(--color-rose)]" : "bg-[var(--color-ink)]"
                 }`}
               >
-                {confirmLabel}
+                {resolvedConfirm}
               </button>
             </div>
           </motion.div>

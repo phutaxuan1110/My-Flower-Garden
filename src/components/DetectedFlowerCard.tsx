@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Pencil, Trash2, Sparkles } from "lucide-react";
 import { FlowerEditor } from "./FlowerEditor";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 export interface EditableFlowerLike {
   id: string;
@@ -23,6 +24,7 @@ interface DetectedFlowerCardProps {
 const LOW_CONFIDENCE_THRESHOLD = 0.7;
 
 export function DetectedFlowerCard({ flower, source, onChange, onRemove }: DetectedFlowerCardProps) {
+  const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const confidence = flower.confidence ?? 1;
   const isLowConfidence = source === "ai" && confidence < LOW_CONFIDENCE_THRESHOLD;
@@ -32,22 +34,24 @@ export function DetectedFlowerCard({ flower, source, onChange, onRemove }: Detec
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
-            <h4 className="font-display text-base text-[var(--color-ink)]">{flower.commonName || "Unnamed flower"}</h4>
+            <h4 className="font-display text-base text-[var(--color-ink)]">
+              {flower.commonName || t("flower.unnamed")}
+            </h4>
             {flower.scientificName && (
               <span className="text-xs italic text-[var(--color-muted)]">{flower.scientificName}</span>
             )}
           </div>
           <p className="mt-0.5 text-xs text-[var(--color-muted)]">
-            {[flower.color, flower.estimatedQuantity ? `${flower.estimatedQuantity} stems` : null]
+            {[flower.color, flower.estimatedQuantity ? `${flower.estimatedQuantity} ${t("flower.stems")}` : null]
               .filter(Boolean)
-              .join(" · ") || "No details yet"}
+              .join(" · ") || t("flower.noDetails")}
           </p>
         </div>
         <div className="flex shrink-0 gap-1.5">
           <button
             type="button"
             onClick={() => setIsEditing((v) => !v)}
-            aria-label={`Edit ${flower.commonName}`}
+            aria-label={`${t("flower.edit")} ${flower.commonName}`}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-blush)] text-[var(--color-ink)] transition-transform active:scale-90"
           >
             <Pencil size={14} strokeWidth={1.75} />
@@ -55,7 +59,7 @@ export function DetectedFlowerCard({ flower, source, onChange, onRemove }: Detec
           <button
             type="button"
             onClick={onRemove}
-            aria-label={`Remove ${flower.commonName}`}
+            aria-label={`${t("flower.remove")} ${flower.commonName}`}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-blush)] text-[var(--color-rose)] transition-transform active:scale-90"
           >
             <Trash2 size={14} strokeWidth={1.75} />
@@ -77,7 +81,7 @@ export function DetectedFlowerCard({ flower, source, onChange, onRemove }: Detec
 
       {isLowConfidence && (
         <p className="mt-2 text-xs italic leading-relaxed text-[var(--color-rose)]">
-          We're not completely sure about this flower. Please check before saving.
+          {t("flower.lowConfidence")}
         </p>
       )}
 

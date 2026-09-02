@@ -3,6 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import { GardenProvider, useGarden } from "./store/GardenProvider";
 import { ToastProvider } from "./hooks/useToast";
 import { AddFlowProvider, useAddFlow } from "./hooks/useAddFlow";
+import { LanguageProvider } from "./i18n/LanguageProvider";
 import { MobileAppShell } from "./components/MobileAppShell";
 import { AddBouquetSheet } from "./components/AddBouquetSheet";
 import { OnboardingPage } from "./pages/OnboardingPage";
@@ -55,14 +56,16 @@ function OnboardingGate() {
 export default function App() {
   return (
     <BrowserRouter>
-      <GardenProvider>
-        <ToastProvider>
-          <AddFlowProvider>
-            <OnboardingGate />
-            <AddBouquetHost />
-          </AddFlowProvider>
-        </ToastProvider>
-      </GardenProvider>
+      <LanguageProvider>
+        <GardenProvider>
+          <ToastProvider>
+            <AddFlowProvider>
+              <OnboardingGate />
+              <AddBouquetHost />
+            </AddFlowProvider>
+          </ToastProvider>
+        </GardenProvider>
+      </LanguageProvider>
     </BrowserRouter>
   );
 }

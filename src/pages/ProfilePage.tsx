@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { RotateCcw, Sprout, User } from "lucide-react";
+import { Globe, RotateCcw, Sprout, User } from "lucide-react";
 import { useGarden } from "../store/GardenProvider";
 import { useToast } from "../hooks/useToast";
+import { useLanguage } from "../i18n/LanguageProvider";
 import { ConfirmationDialog } from "../components/ConfirmationDialog";
 import { gardenRepository } from "../lib/repository";
 
 export function ProfilePage() {
   const { profile, updateProfile, totalCount } = useGarden();
   const { show } = useToast();
+  const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState(profile?.displayName ?? "");
   const [gardenName, setGardenName] = useState(profile?.gardenName ?? "");
@@ -16,7 +18,7 @@ export function ProfilePage() {
 
   async function handleSave() {
     await updateProfile({ displayName: displayName.trim() || "Friend", gardenName: gardenName.trim() || "My Flower Garden" });
-    show("Profile updated");
+    show(t("profile.saved"));
   }
 
   async function handleReset() {
@@ -39,7 +41,7 @@ export function ProfilePage() {
         <div>
           <h1 className="font-display text-xl text-[var(--color-ink)]">{profile?.displayName ?? "Friend"}</h1>
           <p className="text-sm text-[var(--color-muted)]">
-            {totalCount} {totalCount === 1 ? "bouquet" : "bouquets"} saved
+            {totalCount} {t("profile.savedCount")}
           </p>
         </div>
       </div>
@@ -47,7 +49,7 @@ export function ProfilePage() {
       <div className="mt-6 space-y-4">
         <div>
           <label className="mb-1.5 block text-sm font-medium text-[var(--color-ink)]" htmlFor="display-name">
-            Your name
+            {t("profile.yourName")}
           </label>
           <input
             id="display-name"
@@ -58,7 +60,7 @@ export function ProfilePage() {
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-[var(--color-ink)]" htmlFor="garden-name">
-            Garden name
+            {t("profile.gardenName")}
           </label>
           <input
             id="garden-name"
@@ -72,8 +74,40 @@ export function ProfilePage() {
           onClick={handleSave}
           className="min-h-[44px] w-full rounded-full bg-[var(--color-rose)] text-sm font-semibold text-white shadow-md shadow-[var(--color-rose)]/30 active:scale-95"
         >
-          Save changes
+          {t("profile.save")}
         </button>
+      </div>
+
+      <div className="mt-8">
+        <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-[var(--color-ink)]">
+          <Globe size={15} strokeWidth={1.75} /> {t("profile.language")}
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setLanguage("vi")}
+            aria-pressed={language === "vi"}
+            className={`min-h-[44px] flex-1 rounded-full border text-sm font-medium transition-colors ${
+              language === "vi"
+                ? "border-[var(--color-rose)] bg-[var(--color-rose)]/10 text-[var(--color-rose)]"
+                : "border-[var(--color-line)] text-[var(--color-ink)]"
+            }`}
+          >
+            {t("profile.languageVi")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setLanguage("en")}
+            aria-pressed={language === "en"}
+            className={`min-h-[44px] flex-1 rounded-full border text-sm font-medium transition-colors ${
+              language === "en"
+                ? "border-[var(--color-rose)] bg-[var(--color-rose)]/10 text-[var(--color-rose)]"
+                : "border-[var(--color-line)] text-[var(--color-ink)]"
+            }`}
+          >
+            {t("profile.languageEn")}
+          </button>
+        </div>
       </div>
 
       <div className="mt-8 space-y-2">
@@ -82,27 +116,24 @@ export function ProfilePage() {
           onClick={replayOnboarding}
           className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-[var(--color-line)] text-sm font-medium text-[var(--color-ink)]"
         >
-          <Sprout size={15} /> Replay onboarding
+          <Sprout size={15} /> {t("profile.replayOnboarding")}
         </button>
         <button
           type="button"
           onClick={() => setConfirmReset(true)}
           className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full text-sm font-medium text-[var(--color-rose)]"
         >
-          <RotateCcw size={15} /> Reset all garden data
+          <RotateCcw size={15} /> {t("profile.resetData")}
         </button>
       </div>
 
-      <p className="mt-8 text-center text-xs leading-relaxed text-[var(--color-muted)]">
-        This demo stores your garden on this device only. Photos, bouquets and placements are saved locally and
-        will still be here after you refresh.
-      </p>
+      <p className="mt-8 text-center text-xs leading-relaxed text-[var(--color-muted)]">{t("profile.footerNote")}</p>
 
       <ConfirmationDialog
         open={confirmReset}
-        title="Reset all garden data?"
-        description="This permanently deletes every bouquet, photo and placement on this device."
-        confirmLabel="Reset everything"
+        title={t("profile.resetConfirmTitle")}
+        description={t("profile.resetConfirmBody")}
+        confirmLabel={t("profile.resetConfirmCta")}
         destructive
         onConfirm={handleReset}
         onCancel={() => setConfirmReset(false)}

@@ -1,5 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Heart, ArrowRight } from "lucide-react";
+import { BouquetFrame } from "./BouquetFrame";
+import { useLanguage } from "../i18n/LanguageProvider";
 import type { BouquetWithFlowers } from "../types";
 
 interface BouquetQuickViewProps {
@@ -10,6 +12,7 @@ interface BouquetQuickViewProps {
 }
 
 export function BouquetQuickView({ bouquet, onClose, onOpenDetail, onToggleFavorite }: BouquetQuickViewProps) {
+  const { t } = useLanguage();
   return (
     <AnimatePresence>
       {bouquet && (
@@ -28,12 +31,12 @@ export function BouquetQuickView({ bouquet, onClose, onOpenDetail, onToggleFavor
             transition={{ duration: 0.3 }}
             className="w-full max-w-[420px] overflow-hidden rounded-t-[32px] bg-white md:rounded-[32px]"
           >
-            <div className="relative aspect-[4/3] w-full bg-[var(--color-blush)]">
-              <img src={bouquet.imageUrl} alt={bouquet.name} className="h-full w-full object-cover" />
+            <div className="relative aspect-[4/3] w-full bg-[var(--color-blush)] p-4">
+              <BouquetFrame imageUrl={bouquet.imageUrl} frameStyle={bouquet.frameStyle} alt={bouquet.name} className="h-full w-full" />
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Close preview"
+                aria-label={t("common.close")}
                 className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[var(--color-ink)]"
               >
                 <X size={18} />
@@ -41,7 +44,7 @@ export function BouquetQuickView({ bouquet, onClose, onOpenDetail, onToggleFavor
               <button
                 type="button"
                 onClick={onToggleFavorite}
-                aria-label={bouquet.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                aria-label={bouquet.isFavorite ? t("bouquet.removeFromFavorites") : t("bouquet.addToFavorites")}
                 className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[var(--color-rose)]"
               >
                 <Heart size={16} fill={bouquet.isFavorite ? "currentColor" : "none"} />
@@ -50,11 +53,11 @@ export function BouquetQuickView({ bouquet, onClose, onOpenDetail, onToggleFavor
             <div className="p-5">
               <h3 className="font-display text-xl text-[var(--color-ink)]">{bouquet.name}</h3>
               <p className="mt-1 text-sm text-[var(--color-muted)]">
-                {bouquet.flowers.map((f) => f.commonName).join(", ") || "No flowers recorded"}
+                {bouquet.flowers.map((f) => f.commonName).join(", ") || t("bouquet.noFlowersRecorded")}
               </p>
               {bouquet.overallMeaning && (
                 <p className="mt-3 font-display text-[15px] italic leading-relaxed text-[var(--color-rose)]">
-                  “{bouquet.overallMeaning}”
+                  "{bouquet.overallMeaning}"
                 </p>
               )}
               <button
@@ -62,7 +65,7 @@ export function BouquetQuickView({ bouquet, onClose, onOpenDetail, onToggleFavor
                 onClick={onOpenDetail}
                 className="mt-5 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] text-sm font-semibold text-white transition-transform active:scale-95"
               >
-                Open bouquet journal <ArrowRight size={15} />
+                {t("bouquet.openJournal")} <ArrowRight size={15} />
               </button>
             </div>
           </motion.div>

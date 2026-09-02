@@ -2,8 +2,10 @@ import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { GardenCanvas } from "./GardenCanvas";
 import { useGarden } from "../store/GardenProvider";
+import { useLanguage } from "../i18n/LanguageProvider";
 import { VASE_STYLES, DECORATION_STYLES } from "../types";
 import type { BouquetWithFlowers, DecorationStyle, GardenPlacement, VaseStyle } from "../types";
+import type { TranslationKey } from "../i18n/translations";
 
 interface GardenPlacementPickerProps {
   bouquetId: string;
@@ -11,10 +13,25 @@ interface GardenPlacementPickerProps {
   onSkip: () => void;
 }
 
+const VASE_LABEL_KEYS: Record<VaseStyle, TranslationKey> = {
+  "clay-pot": "vase.clayPot",
+  "glass-vase": "vase.glassVase",
+  "woven-basket": "vase.wovenBasket",
+  "tin-bucket": "vase.tinBucket",
+};
+
+const DECORATION_LABEL_KEYS: Record<DecorationStyle, TranslationKey> = {
+  none: "decoration.none",
+  sparkle: "decoration.sparkle",
+  butterflies: "decoration.butterflies",
+  "fairy-lights": "decoration.fairyLights",
+  ribbon: "decoration.ribbon",
+};
+
 export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPlacementPickerProps) {
+  const { t } = useLanguage();
   const { gardenAreas, bouquets, ensureAreaWithFreeSlot, placeBouquet, swapPlacements, removePlacement } =
     useGarden();
-  // placements are derived per-bouquet in context; rebuild a flat list here.
   const placements: GardenPlacement[] = useMemo(
     () => bouquets.filter((b) => b.placement).map((b) => b.placement as GardenPlacement),
     [bouquets]
@@ -38,7 +55,6 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
   async function handleAddArea() {
     const { area } = await ensureAreaWithFreeSlot();
     if (!areas.find((a) => a.id === area.id)) {
-      // new area was created; move view there
       setAreaIndex(areas.length);
     }
     setSelectedArea(area.id);
@@ -52,7 +68,7 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
         slotId,
         areaId: activeArea.id,
         occupantId: occupant.bouquetId,
-        occupantName: occupantBouquet?.name ?? "this bouquet",
+        occupantName: occupantBouquet?.name ?? "",
       });
       return;
     }
@@ -69,22 +85,19 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
     if (result.ok) {
       onPlaced();
     } else {
-      setError(`That spot was just taken by ${result.occupiedByName}. Please choose another.`);
+      setError(`${t("add.placement.takenError")} ${result.occupiedByName}. ${t("add.placement.chooseAnotherError")}`);
     }
   }
 
   async function handleSwap() {
     if (!conflict) return;
     setIsSaving(true);
-    // Place current bouquet's flower into a temporary free slot isn't needed:
-    // swap only works if the current bouquet already has a placement elsewhere.
     const current = bouquetsById.get(bouquetId);
     if (current?.placement) {
       await swapPlacements(bouquetId, conflict.occupantId);
       setIsSaving(false);
       onPlaced();
     } else {
-      // Current bouquet isn't placed yet: move occupant out to Collection, then place here.
       await removePlacement(conflict.occupantId);
       await confirmPlacement(conflict.areaId, conflict.slotId);
     }
@@ -100,9 +113,7 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
   }
 
   if (!activeArea) {
-    return (
-      <div className="px-5 py-8 text-center text-sm text-[var(--color-muted)]">Preparing your garden…</div>
-    );
+    return <div className="px-5 py-8 text-center text-sm text-[var(--color-muted)]">…</div>;
   }
 
   return (
@@ -115,13 +126,13 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
               key={a.id}
               onClick={() => setAreaIndex(i)}
               className={`h-2 w-2 rounded-full ${i === areaIndex ? "bg-[var(--color-rose)]" : "bg-[var(--color-line)]"}`}
-              aria-label={`Show ${a.name}`}
+              aria-label={a.name}
             />
           ))}
           <button
             type="button"
             onClick={handleAddArea}
-            aria-label="Add a new garden corner"
+            aria-label="+"
             className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-blush)] text-[var(--color-rose)]"
           >
             <Plus size={14} />
@@ -141,7 +152,7 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
       {conflict && (
         <div className="mt-4 rounded-[20px] border border-[var(--color-line)] bg-white p-4">
           <p className="text-sm text-[var(--color-ink)]">
-            <strong>{conflict.occupantName}</strong> is already growing here. What would you like to do?
+            <strong>{conflict.occupantName}</strong> {t("add.placement.conflictQuestion")}
           </p>
           <div className="mt-3 flex flex-col gap-2">
             <button
@@ -149,28 +160,28 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
               onClick={handleSwap}
               className="min-h-[44px] rounded-full bg-[var(--color-ink)] text-sm font-semibold text-white active:scale-95"
             >
-              Swap places
+              {t("add.placement.swap")}
             </button>
             <button
               type="button"
               onClick={handleMoveOccupantToCollection}
               className="min-h-[44px] rounded-full border border-[var(--color-line)] text-sm font-medium text-[var(--color-ink)] active:scale-95"
             >
-              Move {conflict.occupantName} to Collection
+              {t("add.placement.moveToCollection")} {conflict.occupantName} {t("add.placement.moveToCollectionSuffix")}
             </button>
             <button
               type="button"
               onClick={() => setConflict(null)}
               className="min-h-[44px] rounded-full text-sm font-medium text-[var(--color-muted)]"
             >
-              Choose another spot
+              {t("add.placement.chooseAnother")}
             </button>
           </div>
         </div>
       )}
 
       <div className="mt-5">
-        <p className="mb-2 text-sm font-medium text-[var(--color-ink)]">Choose a vase</p>
+        <p className="mb-2 text-sm font-medium text-[var(--color-ink)]">{t("add.placement.chooseVase")}</p>
         <div className="flex flex-wrap gap-2">
           {VASE_STYLES.map((v) => (
             <button
@@ -183,14 +194,14 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
                   : "border-[var(--color-line)] text-[var(--color-ink)]"
               }`}
             >
-              {v.label}
+              {t(VASE_LABEL_KEYS[v.id])}
             </button>
           ))}
         </div>
       </div>
 
       <div className="mt-4">
-        <p className="mb-2 text-sm font-medium text-[var(--color-ink)]">Add a decoration</p>
+        <p className="mb-2 text-sm font-medium text-[var(--color-ink)]">{t("add.placement.addDecoration")}</p>
         <div className="flex flex-wrap gap-2">
           {DECORATION_STYLES.map((d) => (
             <button
@@ -203,7 +214,7 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
                   : "border-[var(--color-line)] text-[var(--color-ink)]"
               }`}
             >
-              {d.label}
+              {t(DECORATION_LABEL_KEYS[d.id])}
             </button>
           ))}
         </div>
@@ -218,14 +229,14 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
           onClick={() => selectedArea && selectedSlot && confirmPlacement(selectedArea, selectedSlot)}
           className="min-h-[44px] w-full rounded-full bg-[var(--color-rose)] text-sm font-semibold text-white shadow-md shadow-[var(--color-rose)]/30 transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isSaving ? "Planting…" : "Plant it here"}
+          {isSaving ? t("add.placement.planting") : t("add.placement.plantHere")}
         </button>
         <button
           type="button"
           onClick={onSkip}
           className="min-h-[44px] w-full rounded-full text-sm font-medium text-[var(--color-muted)]"
         >
-          Skip for now, place it later
+          {t("add.placement.skip")}
         </button>
       </div>
     </div>

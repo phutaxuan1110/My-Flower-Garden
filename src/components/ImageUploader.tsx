@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { Image as ImageIcon } from "lucide-react";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 interface ImageUploaderProps {
   onFileSelected: (file: File) => void;
@@ -8,6 +9,7 @@ interface ImageUploaderProps {
 }
 
 export function ImageUploader({ onFileSelected, className, children }: ImageUploaderProps) {
+  const { t } = useLanguage();
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -22,7 +24,7 @@ export function ImageUploader({ onFileSelected, className, children }: ImageUplo
       >
         {children ?? (
           <>
-            <ImageIcon size={16} strokeWidth={1.75} /> Choose from library
+            <ImageIcon size={16} strokeWidth={1.75} /> {t("add.source.chooseLibrary")}
           </>
         )}
       </button>

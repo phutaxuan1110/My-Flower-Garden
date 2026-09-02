@@ -1,13 +1,9 @@
 import { motion } from "framer-motion";
 import { Flower2 } from "lucide-react";
-
-const MESSAGES = [
-  "Discovering the flowers in your bouquet…",
-  "Looking closely at every petal…",
-  "Reading the colors and shapes…",
-];
+import { useLanguage } from "../i18n/LanguageProvider";
 
 export function AIAnalysisState({ imageUrl }: { imageUrl: string }) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col items-center px-8 py-6 text-center">
       <div className="relative h-48 w-48">
@@ -43,9 +39,9 @@ export function AIAnalysisState({ imageUrl }: { imageUrl: string }) {
         animate={{ opacity: 1 }}
         className="mt-6 font-display text-lg text-[var(--color-ink)]"
       >
-        {MESSAGES[0]}
+        {t("add.analyzing.message")}
       </motion.p>
-      <p className="mt-1 text-sm text-[var(--color-muted)]">This usually takes a few seconds.</p>
+      <p className="mt-1 text-sm text-[var(--color-muted)]">{t("add.analyzing.subtext")}</p>
     </div>
   );
 }
