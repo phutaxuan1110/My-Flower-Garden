@@ -116,7 +116,7 @@ export function GardenEditCanvas({
               imageUrl={targetBouquet.imageUrl}
               frameStyle={targetBouquet.frameStyle}
               alt={targetBouquet.name}
-              className="h-20 w-20 border-2 border-[var(--color-rose)] shadow-md shadow-black/10"
+              className="h-20 w-20 drop-shadow-[0_0_10px_var(--color-rose)]"
             />
             <span className="mt-1 max-w-[110px] truncate text-xs font-semibold text-[var(--color-rose)]">
               {targetBouquet.name}
@@ -160,7 +160,7 @@ export function GardenEditCanvas({
                   imageUrl={targetBouquet.imageUrl}
                   frameStyle={targetBouquet.frameStyle}
                   alt={targetBouquet.name}
-                  className="border-2 border-[var(--color-rose)] shadow-lg shadow-black/20"
+                  className="drop-shadow-[0_0_12px_var(--color-rose)]"
                   style={{ width: size * 0.82, height: size * 0.95 }}
                 />
                 <span className="mt-0.5 max-w-[90px] truncate text-[11px] font-semibold text-[var(--color-rose)]">
@@ -188,7 +188,7 @@ export function GardenEditCanvas({
                   imageUrl={occupantBouquet.imageUrl}
                   frameStyle={occupantBouquet.frameStyle}
                   alt={occupantBouquet.name}
-                  className="border-2 border-white shadow-md shadow-black/10"
+                  className="drop-shadow-sm"
                   style={{ width: size * 0.82, height: size * 0.95 }}
                 />
                 <span className="mt-0.5 max-w-[90px] truncate text-[11px] font-medium text-[var(--color-ink)]">
@@ -233,7 +233,7 @@ export function GardenEditCanvas({
             imageUrl={targetBouquet.imageUrl}
             frameStyle={targetBouquet.frameStyle}
             alt=""
-            className="h-full w-full border-2 border-[var(--color-rose)] shadow-xl shadow-black/30"
+            className="h-full w-full drop-shadow-[0_0_16px_var(--color-rose)]"
           />
         </div>
       )}

@@ -103,6 +103,16 @@
     height: 92vh;
     height: 92dvh;
   }
+
+  /* Same vh-then-dvh fallback pattern as `.sheet-fill-height` above, but for
+     a container meant to fill the *entire* viewport edge-to-edge (used by
+     Onboarding). Paired with `overflow-hidden` on the same element so the
+     page can never rubber-band/overscroll past its own background and
+     reveal `body`'s background color behind it. */
+  .full-bleed-height {
+    height: 100vh;
+    height: 100dvh;
+  }
   @media (min-width: 768px) {
     .sheet-fill-height {
       height: 85vh;

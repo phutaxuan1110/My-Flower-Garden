@@ -49,7 +49,7 @@ export function GardenSlot({ slot, bouquet, vaseStyle = "clay-pot", isSelectable
             imageUrl={bouquet.imageUrl}
             frameStyle={bouquet.frameStyle}
             alt={bouquet.name}
-            className="border-2 border-white shadow-md shadow-black/10"
+            className="drop-shadow-sm"
             style={{ width: size * 0.82, height: size * 0.95 }}
           />
           <span className="-mt-2 text-lg leading-none" aria-hidden="true">

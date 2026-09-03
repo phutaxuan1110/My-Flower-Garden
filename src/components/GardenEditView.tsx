@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { GardenEditToolbar } from "./GardenEditToolbar";
+import { GardenEditActions } from "./GardenEditActions";
 import { GardenEditCanvas } from "./GardenEditCanvas";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import { useGarden } from "../store/GardenProvider";
@@ -51,7 +51,7 @@ export function GardenEditView({ targetBouquet, onExit }: GardenEditViewProps) {
     }
   }
 
-  async function handleDone() {
+  async function handleSave() {
     if (!hasChanges || !draftSlotId || !activeAreaId) {
       onExit();
       return;
@@ -77,18 +77,22 @@ export function GardenEditView({ targetBouquet, onExit }: GardenEditViewProps) {
   if (!activeArea) {
     return (
       <div className="flex h-full flex-col">
-        <GardenEditToolbar onCancel={onExit} onDone={onExit} isSaving={false} />
         <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-[var(--color-muted)]">
           {t("gardenEdit.saveFailed")}
         </div>
+        <GardenEditActions onCancel={onExit} onSave={onExit} isSaving={false} />
       </div>
     );
   }
 
   return (
     <div className="flex h-full flex-col">
-      <GardenEditToolbar onCancel={handleCancel} onDone={handleDone} isSaving={isSaving} />
-      <div className="no-scrollbar flex-1 overflow-y-auto px-5 py-4">
+      {/* Safe-area-top padding lives directly on this scrollable content
+          (same background as the rest of the card) instead of a separate
+          fixed header bar — that separate bar (with its own bg-white/95)
+          was the actual cause of the white gap above Garden Edit Mode. */}
+      <div className="no-scrollbar flex-1 overflow-y-auto px-5 pb-4 pt-[max(16px,env(safe-area-inset-top))]">
+        <p className="font-display text-base text-[var(--color-ink)]">{t("gardenEdit.title")}</p>
         <p className="mb-3 font-display text-sm italic text-[var(--color-muted)]">{activeArea.name}</p>
         {saveError && <p className="mb-3 text-sm text-[var(--color-rose)]">{saveError}</p>}
         <GardenEditCanvas
@@ -100,6 +104,8 @@ export function GardenEditView({ targetBouquet, onExit }: GardenEditViewProps) {
           onConflict={() => show(t("gardenEdit.slotOccupied"), "info")}
         />
       </div>
+
+      <GardenEditActions onCancel={handleCancel} onSave={handleSave} isSaving={isSaving} />
 
       <ConfirmationDialog
         open={confirmDiscardOpen}

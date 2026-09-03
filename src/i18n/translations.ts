@@ -145,9 +145,6 @@ const dict = {
 
   // Garden edit mode (drag-and-drop repositioning)
   "gardenEdit.title": { vi: "Sắp xếp khu vườn", en: "Arrange your garden" },
-  "gardenEdit.cancel": { vi: "Hủy", en: "Cancel" },
-  "gardenEdit.done": { vi: "Xong", en: "Done" },
-  "gardenEdit.saving": { vi: "Đang lưu vị trí…", en: "Saving position…" },
   "gardenEdit.discardTitle": { vi: "Bỏ thay đổi vị trí?", en: "Discard position changes?" },
   "gardenEdit.discardBody": {
     vi: "Bó hoa sẽ trở về vị trí trước đó.",
