@@ -1,4 +1,11 @@
 import { makeId, nowIso } from "./id";
+import {
+  bouquetImageReference,
+  deleteBouquetImage,
+  isBouquetImageReference,
+  readBouquetImage,
+  storeBouquetImage,
+} from "./imageStorage";
 import type {
   Bouquet,
   BouquetFlower,
@@ -71,6 +78,40 @@ function write<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+function isInlineImage(value: string): boolean {
+  return value.startsWith("data:image/");
+}
+
+async function hydrateBouquetImage(bouquet: Bouquet): Promise<Bouquet> {
+  if (!isBouquetImageReference(bouquet.imageUrl)) return bouquet;
+  const image = await readBouquetImage(bouquet.id);
+  return image ? { ...bouquet, imageUrl: image } : bouquet;
+}
+
+/**
+ * Move legacy inline images out of localStorage before the next write. Safari
+ * gives localStorage a small quota, so keeping several photo Data URLs in the
+ * bouquets JSON eventually makes every new save fail with QuotaExceededError.
+ */
+async function readStoredBouquets(): Promise<Bouquet[]> {
+  const stored = read<Bouquet[]>(KEYS.bouquets, []);
+  let migrated = false;
+  const compact: Bouquet[] = [];
+
+  for (const bouquet of stored) {
+    if (isInlineImage(bouquet.imageUrl)) {
+      await storeBouquetImage(bouquet.id, bouquet.imageUrl);
+      compact.push({ ...bouquet, imageUrl: bouquetImageReference(bouquet.id) });
+      migrated = true;
+    } else {
+      compact.push(bouquet);
+    }
+  }
+
+  if (migrated) write(KEYS.bouquets, compact);
+  return compact;
+}
+
 // Simulated network latency keeps loading states honest during development.
 function tick<T>(value: T, ms = 120): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms));
@@ -116,16 +157,19 @@ export class LocalStorageGardenRepository implements GardenRepository {
 
   async listBouquets(): Promise<Bouquet[]> {
     this.ensureProfile();
-    return tick(read<Bouquet[]>(KEYS.bouquets, []));
+    const stored = await readStoredBouquets();
+    const hydrated = await Promise.all(stored.map(hydrateBouquetImage));
+    return tick(hydrated);
   }
 
   async getBouquet(id: string): Promise<Bouquet | undefined> {
-    const all = read<Bouquet[]>(KEYS.bouquets, []);
-    return tick(all.find((b) => b.id === id));
+    const all = await readStoredBouquets();
+    const bouquet = all.find((b) => b.id === id);
+    return tick(bouquet ? await hydrateBouquetImage(bouquet) : undefined);
   }
 
   async createBouquet(input: Omit<Bouquet, "id" | "createdAt" | "userId" | "updatedAt">): Promise<Bouquet> {
-    const all = read<Bouquet[]>(KEYS.bouquets, []);
+    const all = await readStoredBouquets();
     const ts = nowIso();
     const bouquet: Bouquet = {
       ...input,
@@ -134,28 +178,44 @@ export class LocalStorageGardenRepository implements GardenRepository {
       createdAt: ts,
       updatedAt: ts,
     };
-    write(KEYS.bouquets, [...all, bouquet]);
+    let storedBouquet = bouquet;
+    if (isInlineImage(bouquet.imageUrl)) {
+      await storeBouquetImage(bouquet.id, bouquet.imageUrl);
+      storedBouquet = { ...bouquet, imageUrl: bouquetImageReference(bouquet.id) };
+    }
+
+    try {
+      write(KEYS.bouquets, [...all, storedBouquet]);
+    } catch (error) {
+      if (storedBouquet !== bouquet) await deleteBouquetImage(bouquet.id);
+      throw error;
+    }
     return tick(bouquet, 400);
   }
 
   async updateBouquet(id: string, patch: Partial<Omit<Bouquet, "id" | "userId" | "createdAt">>): Promise<Bouquet> {
-    const all = read<Bouquet[]>(KEYS.bouquets, []);
+    const all = await readStoredBouquets();
     const idx = all.findIndex((b) => b.id === id);
     if (idx === -1) throw new Error("Bouquet not found");
-    const updated: Bouquet = { ...all[idx], ...patch, id: all[idx].id, updatedAt: nowIso() };
+    let updated: Bouquet = { ...all[idx], ...patch, id: all[idx].id, updatedAt: nowIso() };
+    if (isInlineImage(updated.imageUrl)) {
+      await storeBouquetImage(id, updated.imageUrl);
+      updated = { ...updated, imageUrl: bouquetImageReference(id) };
+    }
     const next = [...all];
     next[idx] = updated;
     write(KEYS.bouquets, next);
-    return tick(updated, 300);
+    return tick(await hydrateBouquetImage(updated), 300);
   }
 
   async deleteBouquet(id: string): Promise<void> {
-    const bouquets = read<Bouquet[]>(KEYS.bouquets, []).filter((b) => b.id !== id);
+    const bouquets = (await readStoredBouquets()).filter((b) => b.id !== id);
     const flowers = read<BouquetFlower[]>(KEYS.flowers, []).filter((f) => f.bouquetId !== id);
     const placements = read<GardenPlacement[]>(KEYS.placements, []).filter((p) => p.bouquetId !== id);
     write(KEYS.bouquets, bouquets);
     write(KEYS.flowers, flowers);
     write(KEYS.placements, placements);
+    await deleteBouquetImage(id);
     return tick(undefined, 250);
   }
 
