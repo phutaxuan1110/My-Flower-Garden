@@ -12,7 +12,6 @@ export interface MemoryFormState {
   customOccasion?: string;
   giftedBy?: string;
   personalNote?: string;
-  isFavorite: boolean;
   frameStyle: FrameStyle;
 }
 
@@ -33,7 +32,7 @@ const OCCASION_KEYS: Record<Occasion, TranslationKey> = {
 
 const FIELD_BASE_CLASS =
   "block w-full min-w-0 max-w-full box-border rounded-2xl border border-[var(--color-line)] bg-white px-3.5 text-sm text-[var(--color-ink)] outline-none focus:border-[var(--color-rose)]";
-const SINGLE_LINE_FIELD_CLASS = `${FIELD_BASE_CLASS} h-12`;
+const SINGLE_LINE_FIELD_CLASS = `${FIELD_BASE_CLASS} h-12 min-h-12`;
 const LABEL_CLASS = "mb-1.5 block text-sm font-medium text-[var(--color-ink)]";
 
 export function BouquetMemoryForm({ value, onChange, imageUrl }: BouquetMemoryFormProps) {

@@ -36,6 +36,7 @@ export function BouquetDetailPage() {
   const bouquet = id ? getBouquet(id) : undefined;
 
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmCancelEdit, setConfirmCancelEdit] = useState(false);
   const [isEditing, setIsEditing] = useState(searchParams.get("edit") === "1");
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -49,7 +50,6 @@ export function BouquetDetailPage() {
     customOccasion: bouquet?.customOccasion,
     giftedBy: bouquet?.giftedBy,
     personalNote: bouquet?.personalNote,
-    isFavorite: bouquet?.isFavorite ?? false,
     frameStyle: bouquet?.frameStyle ?? "arch",
   });
   const [editableFlowers, setEditableFlowers] = useState(bouquet?.flowers ?? []);
@@ -63,10 +63,9 @@ export function BouquetDetailPage() {
       customOccasion: bouquet.customOccasion,
       giftedBy: bouquet.giftedBy,
       personalNote: bouquet.personalNote,
-      isFavorite: bouquet.isFavorite,
       frameStyle: bouquet.frameStyle,
     });
-    setEditableFlowers(bouquet.flowers);
+    setEditableFlowers(bouquet.flowers.map((flower) => ({ ...flower })));
     setEditedImageUrl(null);
     setPhotoError(null);
     setSaveError(null);
@@ -79,7 +78,35 @@ export function BouquetDetailPage() {
 
   function cancelEdit() {
     resetEditDraft();
+    setConfirmCancelEdit(false);
     setIsEditing(false);
+  }
+
+  const hasUnsavedEdit = useMemo(() => {
+    if (!bouquet) return false;
+    const originalMemory: MemoryFormState = {
+      name: bouquet.name,
+      receivedDate: bouquet.receivedDate.slice(0, 10),
+      occasion: bouquet.occasion,
+      customOccasion: bouquet.customOccasion,
+      giftedBy: bouquet.giftedBy,
+      personalNote: bouquet.personalNote,
+      frameStyle: bouquet.frameStyle,
+    };
+
+    return (
+      editedImageUrl !== null ||
+      JSON.stringify(memory) !== JSON.stringify(originalMemory) ||
+      JSON.stringify(editableFlowers) !== JSON.stringify(bouquet.flowers)
+    );
+  }, [bouquet, editedImageUrl, editableFlowers, memory]);
+
+  function requestCancelEdit() {
+    if (hasUnsavedEdit) {
+      setConfirmCancelEdit(true);
+    } else {
+      cancelEdit();
+    }
   }
 
   useEffect(() => {
@@ -147,7 +174,6 @@ export function BouquetDetailPage() {
           customOccasion: memory.customOccasion,
           giftedBy: memory.giftedBy,
           personalNote: memory.personalNote,
-          isFavorite: memory.isFavorite,
           frameStyle: memory.frameStyle,
           imageUrl: editedImageUrl ?? bouquet!.imageUrl,
         },
@@ -176,34 +202,36 @@ export function BouquetDetailPage() {
 
   return (
     <div
-      className={isEditing ? "pb-4" : undefined}
-      style={isEditing ? undefined : { paddingBottom: "calc(112px + env(safe-area-inset-bottom))" }}
+      style={{ paddingBottom: `calc(${isEditing ? "144px" : "112px"} + env(safe-area-inset-bottom))` }}
     >
       <div className="relative">
-        <div className="w-full bg-[var(--color-blush)]">
-          <img src={displayImageUrl} alt={bouquet.name} className="block h-auto w-full max-w-full" />
+        <div className="aspect-[3/4] w-full overflow-hidden bg-[var(--color-blush)]">
+          <img src={displayImageUrl} alt={bouquet.name} className="h-full w-full object-cover object-center" />
         </div>
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          aria-label={t("common.back")}
-          className="absolute left-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[var(--color-ink)] shadow-sm backdrop-blur-sm"
-          style={{ top: "max(1rem, env(safe-area-inset-top))" }}
-        >
-          <ArrowLeft size={18} />
-        </button>
-        {!isEditing && (
+      </div>
+
+      {!isEditing && (
+        <div className="pointer-events-none fixed left-1/2 top-0 z-40 w-full max-w-[480px] -translate-x-1/2">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label={t("common.back")}
+            className="pointer-events-auto absolute left-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[var(--color-ink)] shadow-sm backdrop-blur-sm"
+            style={{ top: "calc(env(safe-area-inset-top) + 1rem)" }}
+          >
+            <ArrowLeft size={18} />
+          </button>
           <button
             type="button"
             onClick={() => toggleFavorite(bouquet.id)}
             aria-label={bouquet.isFavorite ? t("bouquet.removeFromFavorites") : t("bouquet.addToFavorites")}
-            className="absolute right-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[var(--color-rose)] shadow-sm backdrop-blur-sm"
-            style={{ top: "max(1rem, env(safe-area-inset-top))" }}
+            className="pointer-events-auto absolute right-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[var(--color-rose)] shadow-sm backdrop-blur-sm"
+            style={{ top: "calc(env(safe-area-inset-top) + 1rem)" }}
           >
             <Heart size={18} fill={bouquet.isFavorite ? "currentColor" : "none"} />
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {isEditing && (
         <div className="px-5 pt-4">
@@ -335,25 +363,14 @@ export function BouquetDetailPage() {
 
       {isEditing && (
         <BouquetMemoryActions
-          isFavorite={memory.isFavorite}
-          onToggleFavorite={() => setMemoryState((m) => ({ ...m, isFavorite: !m.isFavorite }))}
+          onCancel={requestCancelEdit}
           onSave={handleSaveEdit}
           isSaving={isSavingEdit}
           disabled={!canSaveEdit}
           saveLabel={t("detail.saveChanges")}
           errorMessage={saveError}
+          fixed
         />
-      )}
-      {isEditing && (
-        <div className="px-5 pt-3">
-          <button
-            type="button"
-            onClick={cancelEdit}
-            className="min-h-[44px] w-full rounded-full border border-[var(--color-line)] text-sm font-medium text-[var(--color-ink)]"
-          >
-            {t("common.cancel")}
-          </button>
-        </div>
       )}
 
       {!isEditing && (
@@ -376,6 +393,17 @@ export function BouquetDetailPage() {
           </div>
         </div>
       )}
+
+      <ConfirmationDialog
+        open={confirmCancelEdit}
+        title={t("detail.cancelEditTitle")}
+        description={t("detail.cancelEditBody")}
+        confirmLabel={t("detail.cancelEditConfirm")}
+        cancelLabel={t("detail.cancelEditContinue")}
+        destructive
+        onConfirm={cancelEdit}
+        onCancel={() => setConfirmCancelEdit(false)}
+      />
 
       <ConfirmationDialog
         open={confirmDelete}

@@ -60,7 +60,6 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
   const [memory, setMemory] = useState<MemoryFormState>({
     name: "",
     receivedDate: todayLocalDateString(),
-    isFavorite: false,
     frameStyle: "arch",
   });
 
@@ -154,7 +153,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
         giftedBy: memory.giftedBy,
         personalNote: memory.personalNote,
         overallMeaning,
-        isFavorite: memory.isFavorite,
+        isFavorite: false,
         detectionStatus,
         frameStyle: memory.frameStyle,
         flowers: flowers.map((f) => ({
@@ -334,7 +333,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
                   >
                     {t("common.continue")}
                   </button>
-                  {flowers.length > 0 && flowers.some((f) => !f.commonName.trim()) && (
+                  {flowers.some((f) => !f.commonName.trim()) && (
                     <p className="mt-2 text-center text-xs text-[var(--color-muted)]">{t("add.review.nameAllFlowers")}</p>
                   )}
                 </div>
@@ -408,8 +407,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
 
         {step === "memory" && (
           <BouquetMemoryActions
-            isFavorite={memory.isFavorite}
-            onToggleFavorite={() => setMemory((m) => ({ ...m, isFavorite: !m.isFavorite }))}
+            onCancel={requestClose}
             onSave={handleSave}
             isSaving={isSaving}
             disabled={!canSave}
@@ -423,6 +421,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
         title={t("add.discard.title")}
         description={t("add.discard.body")}
         confirmLabel={t("add.discard.confirm")}
+        cancelLabel={t("add.discard.continue")}
         destructive
         onConfirm={() => {
           setConfirmDiscard(false);

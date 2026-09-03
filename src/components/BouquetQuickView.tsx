@@ -1,6 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Heart, ArrowRight } from "lucide-react";
-import { BouquetFrame } from "./BouquetFrame";
 import { useLanguage } from "../i18n/LanguageProvider";
 import type { BouquetWithFlowers } from "../types";
 
@@ -31,13 +30,17 @@ export function BouquetQuickView({ bouquet, onClose, onOpenDetail, onToggleFavor
             transition={{ duration: 0.3 }}
             className="w-full max-w-[420px] overflow-hidden rounded-t-[32px] bg-white md:rounded-[32px]"
           >
-            <div className="relative aspect-[4/3] w-full bg-[var(--color-blush)] p-4">
-              <BouquetFrame imageUrl={bouquet.imageUrl} frameStyle={bouquet.frameStyle} alt={bouquet.name} className="h-full w-full" />
+            <div className="relative aspect-[4/3] w-full overflow-hidden">
+              <img
+                src={bouquet.imageUrl}
+                alt={bouquet.name}
+                className="h-full w-full object-cover object-center"
+              />
               <button
                 type="button"
                 onClick={onClose}
                 aria-label={t("common.close")}
-                className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[var(--color-ink)]"
+                className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[var(--color-ink)] shadow-sm backdrop-blur-sm"
               >
                 <X size={18} />
               </button>
@@ -45,7 +48,7 @@ export function BouquetQuickView({ bouquet, onClose, onOpenDetail, onToggleFavor
                 type="button"
                 onClick={onToggleFavorite}
                 aria-label={bouquet.isFavorite ? t("bouquet.removeFromFavorites") : t("bouquet.addToFavorites")}
-                className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[var(--color-rose)]"
+                className="absolute left-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[var(--color-rose)] shadow-sm backdrop-blur-sm"
               >
                 <Heart size={16} fill={bouquet.isFavorite ? "currentColor" : "none"} />
               </button>

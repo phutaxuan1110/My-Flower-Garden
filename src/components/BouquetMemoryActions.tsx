@@ -1,35 +1,35 @@
-import { Heart, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageProvider";
 
 interface BouquetMemoryActionsProps {
-  isFavorite: boolean;
-  onToggleFavorite: () => void;
+  onCancel: () => void;
   onSave: () => void;
   isSaving: boolean;
   disabled?: boolean;
+  cancelLabel?: string;
   saveLabel?: string;
   errorMessage?: string | null;
+  fixed?: boolean;
 }
 
-/**
- * Renders the "Yêu thích" (favorite toggle, ~40% width) + "Lưu" (primary save,
- * ~60% width) row. Favorite is a plain button — it only flips local state via
- * onToggleFavorite and never submits/saves on its own, so tapping it can never
- * accidentally trigger a save.
- */
 export function BouquetMemoryActions({
-  isFavorite,
-  onToggleFavorite,
+  onCancel,
   onSave,
   isSaving,
   disabled,
+  cancelLabel,
   saveLabel,
   errorMessage,
+  fixed = false,
 }: BouquetMemoryActionsProps) {
   const { t } = useLanguage();
 
   return (
-    <div className="border-t border-[var(--color-line)] bg-[var(--color-bg)] px-5 pt-3 safe-bottom">
+    <div
+      className={`${
+        fixed ? "fixed bottom-0 left-1/2 z-30 w-full max-w-[480px] -translate-x-1/2 md:absolute" : ""
+      } border-t border-[var(--color-line)] bg-[var(--color-bg)]/95 px-5 pt-3 shadow-[0_-8px_24px_rgba(74,53,64,0.08)] backdrop-blur-md safe-bottom`}
+    >
       {errorMessage && (
         <p className="mb-2 text-sm text-[var(--color-rose)]" role="alert">
           {errorMessage}
@@ -38,17 +38,11 @@ export function BouquetMemoryActions({
       <div className="flex gap-3">
         <button
           type="button"
-          onClick={onToggleFavorite}
-          aria-pressed={isFavorite}
-          aria-label={isFavorite ? t("bouquet.removeFromFavorites") : t("bouquet.addToFavorites")}
-          className={`flex min-h-[48px] flex-[0_0_40%] items-center justify-center gap-1.5 rounded-full border text-sm font-medium transition-colors ${
-            isFavorite
-              ? "border-[var(--color-rose)] bg-[var(--color-rose)]/10 text-[var(--color-rose)]"
-              : "border-[var(--color-line)] text-[var(--color-ink)]"
-          }`}
+          onClick={onCancel}
+          disabled={isSaving}
+          className="flex min-h-[48px] flex-[0_0_40%] items-center justify-center rounded-full border border-[var(--color-line)] bg-white text-sm font-medium text-[var(--color-ink)] transition-colors hover:bg-[var(--color-blush)] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <Heart size={16} fill={isFavorite ? "currentColor" : "none"} />
-          {t("common.favorite")}
+          {cancelLabel ?? t("common.cancel")}
         </button>
         <button
           type="button"

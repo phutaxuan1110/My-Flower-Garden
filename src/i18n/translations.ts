@@ -140,6 +140,10 @@ const dict = {
   "detail.chooseFrame": { vi: "Chọn khung ảnh", en: "Choose a frame" },
   "detail.editInfo": { vi: "Sửa thông tin", en: "Edit info" },
   "detail.editMemoryTitle": { vi: "Chỉnh sửa kỷ niệm", en: "Edit the memory" },
+  "detail.cancelEditTitle": { vi: "Hủy chỉnh sửa?", en: "Discard changes?" },
+  "detail.cancelEditBody": { vi: "Những thay đổi chưa lưu sẽ bị mất.", en: "Your unsaved changes will be lost." },
+  "detail.cancelEditConfirm": { vi: "Hủy thay đổi", en: "Discard changes" },
+  "detail.cancelEditContinue": { vi: "Tiếp tục chỉnh sửa", en: "Keep editing" },
 
   // Garden edit mode (drag-and-drop repositioning)
   "gardenEdit.title": { vi: "Sắp xếp khu vườn", en: "Arrange your garden" },
@@ -264,9 +268,10 @@ const dict = {
   "add.success.backToGarden": { vi: "Về Khu vườn", en: "Back to Garden" },
   "add.success.editNow": { vi: "Chỉnh sửa ngay", en: "Edit now" },
   "add.success.savedToast": { vi: "Đã lưu bó hoa vào khu vườn", en: "Bouquet saved to your garden" },
-  "add.discard.title": { vi: "Hủy bó hoa này?", en: "Discard this bouquet?" },
-  "add.discard.body": { vi: "Ảnh và tiến trình của bạn sẽ bị mất.", en: "Your photo and progress on this bouquet will be lost." },
-  "add.discard.confirm": { vi: "Hủy bỏ", en: "Discard" },
+  "add.discard.title": { vi: "Hủy tạo bó hoa?", en: "Discard this bouquet?" },
+  "add.discard.body": { vi: "Những thông tin bạn đã nhập sẽ không được lưu.", en: "The information you entered will not be saved." },
+  "add.discard.confirm": { vi: "Hủy tạo", en: "Discard bouquet" },
+  "add.discard.continue": { vi: "Tiếp tục chỉnh sửa", en: "Keep editing" },
 
   // Vase / decoration labels
   "vase.clayPot": { vi: "Chậu đất nung", en: "Clay pot" },
