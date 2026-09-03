@@ -103,6 +103,9 @@ const dict = {
   "common.edit": { vi: "Chỉnh sửa", en: "Edit" },
   "common.done": { vi: "Xong", en: "Done" },
   "common.retry": { vi: "Thử lại", en: "Try again" },
+  "common.favorite": { vi: "Yêu thích", en: "Favorite" },
+  "common.save": { vi: "Lưu", en: "Save" },
+  "common.saving": { vi: "Đang lưu…", en: "Saving…" },
 
   // Bouquet card / quick view
   "bouquet.openJournal": { vi: "Mở nhật ký bó hoa", en: "Open bouquet journal" },
@@ -137,6 +140,31 @@ const dict = {
   "detail.updatedToast": { vi: "Đã cập nhật bó hoa", en: "Bouquet updated" },
   "detail.editValidation": { vi: "Bó hoa cần có tên và ít nhất một loài hoa.", en: "A bouquet needs a name and at least one flower." },
   "detail.chooseFrame": { vi: "Chọn khung ảnh", en: "Choose a frame" },
+  "detail.editInfo": { vi: "Sửa thông tin bó hoa", en: "Edit bouquet info" },
+  "detail.editMemoryTitle": { vi: "Chỉnh sửa kỷ niệm", en: "Edit the memory" },
+
+  // Garden edit mode (drag-and-drop repositioning)
+  "gardenEdit.title": { vi: "Sắp xếp khu vườn", en: "Arrange your garden" },
+  "gardenEdit.cancel": { vi: "Hủy", en: "Cancel" },
+  "gardenEdit.done": { vi: "Xong", en: "Done" },
+  "gardenEdit.saving": { vi: "Đang lưu vị trí…", en: "Saving position…" },
+  "gardenEdit.discardTitle": { vi: "Bỏ thay đổi vị trí?", en: "Discard position changes?" },
+  "gardenEdit.discardBody": {
+    vi: "Bó hoa sẽ trở về vị trí trước đó.",
+    en: "The bouquet will return to its previous spot.",
+  },
+  "gardenEdit.discardConfirm": { vi: "Bỏ thay đổi", en: "Discard changes" },
+  "gardenEdit.slotOccupied": {
+    vi: "Vị trí này đã có bó hoa khác. Vui lòng chọn vị trí trống.",
+    en: "This spot already has another bouquet. Please choose an empty one.",
+  },
+  "gardenEdit.saveFailed": {
+    vi: "Không thể lưu vị trí mới. Vui lòng thử lại.",
+    en: "We couldn't save the new position. Please try again.",
+  },
+  "gardenEdit.dragHint": { vi: "Giữ và kéo bó hoa để đổi vị trí", en: "Hold and drag the bouquet to move it" },
+  "gardenEdit.trayHint": { vi: "Kéo bó hoa vào một vị trí trống", en: "Drag the bouquet into an empty spot" },
+  "gardenEdit.saved": { vi: "Đã cập nhật vị trí trong vườn", en: "Garden position updated" },
 
   // Flower card
   "flower.unnamed": { vi: "Chưa đặt tên", en: "Unnamed flower" },
@@ -163,7 +191,8 @@ const dict = {
   "add.step.preview": { vi: "Xem trước ảnh", en: "Preview your photo" },
   "add.step.analyzing": { vi: "Đang nhận diện hoa", en: "Identifying flowers" },
   "add.step.review": { vi: "Xem lại các loài hoa", en: "Review the flowers" },
-  "add.step.memory": { vi: "Kể câu chuyện của nó", en: "Tell its story" },
+  "add.step.memory": { vi: "Lưu kỷ niệm", en: "Save the memory" },
+  "add.step.memoryEdit": { vi: "Chỉnh sửa kỷ niệm", en: "Edit the memory" },
   "add.step.placement": { vi: "Chọn nơi hoa sẽ nở", en: "Choose where it blooms" },
   "add.step.success": { vi: "Đã lưu bó hoa", en: "Bouquet saved" },
 
@@ -214,7 +243,7 @@ const dict = {
   "add.memory.markFavorite": { vi: "Đánh dấu yêu thích", en: "Mark as favorite" },
   "add.memory.markedFavorite": { vi: "Đã đánh dấu yêu thích", en: "Marked as favorite" },
   "add.memory.chooseFrame": { vi: "Chọn khung ảnh cho bó hoa", en: "Choose a frame for your bouquet" },
-  "add.memory.save": { vi: "Lưu bó hoa", en: "Save bouquet" },
+  "add.memory.save": { vi: "Lưu", en: "Save" },
   "add.memory.saving": { vi: "Đang lưu…", en: "Saving…" },
   "add.memory.needName": { vi: "Đặt tên cho bó hoa để lưu lại.", en: "Give your bouquet a name to save it." },
   "add.memory.needFlower": { vi: "Thêm ít nhất một loài hoa để lưu lại.", en: "Add at least one flower to save it." },

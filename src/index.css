@@ -30,6 +30,12 @@
     height: 100%;
   }
 
+  :root {
+    /* Matches BottomNavigation's rendered height (icon + label + vertical
+       padding) so content can reserve exactly enough space above it. */
+    --bottom-nav-h: 64px;
+  }
+
   body {
     background-color: var(--color-bg);
     color: var(--color-ink);
@@ -78,10 +84,35 @@
   }
 
   .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
   .safe-top {
     padding-top: env(safe-area-inset-top);
+  }
+
+  .app-content-padding {
+    padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 16px);
+  }
+
+  /* Dynamic-viewport-safe full-bleed heights for full-screen sheets. Written
+     as two declarations on purpose: browsers that don't support `dvh` simply
+     ignore that line and keep the `vh` fallback above it; browsers that do
+     support it use the more accurate dynamic value that tracks Safari's
+     address bar / toolbar showing or hiding. */
+  .sheet-fill-height {
+    height: 92vh;
+    height: 92dvh;
+  }
+  @media (min-width: 768px) {
+    .sheet-fill-height {
+      height: 85vh;
+      height: 85dvh;
+    }
+  }
+
+  .no-native-drag {
+    -webkit-user-drag: none;
+    user-select: none;
   }
 
   .no-scrollbar::-webkit-scrollbar {

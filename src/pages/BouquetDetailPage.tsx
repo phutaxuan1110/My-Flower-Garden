@@ -5,14 +5,15 @@ import { useGarden } from "../store/GardenProvider";
 import { useToast } from "../hooks/useToast";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { ConfirmationDialog } from "../components/ConfirmationDialog";
-import { GardenPlacementPicker } from "../components/GardenPlacementPicker";
 import { ErrorState } from "../components/ErrorState";
 import { BouquetMemoryForm } from "../components/BouquetMemoryForm";
 import type { MemoryFormState } from "../components/BouquetMemoryForm";
+import { BouquetMemoryActions } from "../components/BouquetMemoryActions";
 import { DetectedFlowerCard } from "../components/DetectedFlowerCard";
 import { BouquetFrame } from "../components/BouquetFrame";
 import { ImageUploader } from "../components/ImageUploader";
 import { compressImageToDataUrl, validateImageFile, ImageValidationError } from "../lib/image";
+import { parseLocalDateString } from "../lib/date";
 import type { TranslationKey } from "../i18n/translations";
 import type { Occasion } from "../types";
 
@@ -36,9 +37,9 @@ export function BouquetDetailPage() {
   const bouquet = id ? getBouquet(id) : undefined;
 
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [showMove, setShowMove] = useState(false);
   const [isEditing, setIsEditing] = useState(searchParams.get("edit") === "1");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
@@ -104,46 +105,52 @@ export function BouquetDetailPage() {
     }
   }
 
+  const canSaveEdit = memory.name.trim().length > 0 && editableFlowers.length > 0;
+
   async function handleSaveEdit() {
-    if (!memory.name.trim() || editableFlowers.length === 0) {
-      setSaveError(t("detail.editValidation"));
-      return;
-    }
+    if (!canSaveEdit || isSavingEdit) return;
+    setIsSavingEdit(true);
     setSaveError(null);
-    await updateBouquet(
-      bouquet!.id,
-      {
-        name: memory.name.trim(),
-        receivedDate: memory.receivedDate,
-        occasion: memory.occasion,
-        customOccasion: memory.customOccasion,
-        giftedBy: memory.giftedBy,
-        personalNote: memory.personalNote,
-        overallMeaning: memory.overallMeaning,
-        isFavorite: memory.isFavorite,
-        frameStyle: memory.frameStyle,
-        imageUrl: editedImageUrl ?? bouquet!.imageUrl,
-      },
-      editableFlowers.map((f) => ({
-        commonName: f.commonName,
-        scientificName: f.scientificName,
-        color: f.color,
-        estimatedQuantity: f.estimatedQuantity,
-        confidence: f.confidence,
-        meaning: f.meaning,
-        symbolism: f.symbolism,
-        source: f.source,
-      }))
-    );
-    show(t("detail.updatedToast"));
-    setEditedImageUrl(null);
-    setIsEditing(false);
+    try {
+      await updateBouquet(
+        bouquet!.id,
+        {
+          name: memory.name.trim(),
+          receivedDate: memory.receivedDate,
+          occasion: memory.occasion,
+          customOccasion: memory.customOccasion,
+          giftedBy: memory.giftedBy,
+          personalNote: memory.personalNote,
+          overallMeaning: memory.overallMeaning,
+          isFavorite: memory.isFavorite,
+          frameStyle: memory.frameStyle,
+          imageUrl: editedImageUrl ?? bouquet!.imageUrl,
+        },
+        editableFlowers.map((f) => ({
+          commonName: f.commonName,
+          scientificName: f.scientificName,
+          color: f.color,
+          estimatedQuantity: f.estimatedQuantity,
+          confidence: f.confidence,
+          meaning: f.meaning,
+          symbolism: f.symbolism,
+          source: f.source,
+        }))
+      );
+      show(t("detail.updatedToast"));
+      setEditedImageUrl(null);
+      setIsEditing(false);
+    } catch {
+      setSaveError(t("gardenEdit.saveFailed"));
+    } finally {
+      setIsSavingEdit(false);
+    }
   }
 
   const displayImageUrl = editedImageUrl ?? bouquet.imageUrl;
 
   return (
-    <div className="pb-8">
+    <div className={isEditing ? "pb-4" : "pb-8"}>
       <div className="relative">
         <div className="aspect-[4/3] w-full bg-[var(--color-blush)] p-6">
           <BouquetFrame imageUrl={displayImageUrl} frameStyle={isEditing ? memory.frameStyle : bouquet.frameStyle} alt={bouquet.name} className="h-full w-full" />
@@ -156,21 +163,24 @@ export function BouquetDetailPage() {
         >
           <ArrowLeft size={18} />
         </button>
-        <button
-          type="button"
-          onClick={() => toggleFavorite(bouquet.id)}
-          aria-label={bouquet.isFavorite ? t("bouquet.removeFromFavorites") : t("bouquet.addToFavorites")}
-          className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[var(--color-rose)] shadow-sm"
-        >
-          <Heart size={18} fill={bouquet.isFavorite ? "currentColor" : "none"} />
-        </button>
+        {!isEditing && (
+          <button
+            type="button"
+            onClick={() => toggleFavorite(bouquet.id)}
+            aria-label={bouquet.isFavorite ? t("bouquet.removeFromFavorites") : t("bouquet.addToFavorites")}
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[var(--color-rose)] shadow-sm"
+          >
+            <Heart size={18} fill={bouquet.isFavorite ? "currentColor" : "none"} />
+          </button>
+        )}
       </div>
 
       {isEditing && (
         <div className="px-5 pt-4">
+          <h2 className="font-display text-lg text-[var(--color-ink)]">{t("detail.editMemoryTitle")}</h2>
           <ImageUploader
             onFileSelected={handlePhotoChange}
-            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-dashed border-[var(--color-primary-strong)] px-4 text-sm font-medium text-[var(--color-rose)]"
+            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-dashed border-[var(--color-primary-strong)] px-4 text-sm font-medium text-[var(--color-rose)]"
           >
             <Camera size={15} /> {t("detail.changePhoto")}
           </ImageUploader>
@@ -182,7 +192,7 @@ export function BouquetDetailPage() {
         {!isEditing && <h1 className="font-display text-2xl text-[var(--color-ink)]">{bouquet.name}</h1>}
         {!isEditing && (
           <p className="mt-1 text-sm text-[var(--color-muted)]">
-            {new Date(bouquet.receivedDate).toLocaleDateString(undefined, {
+            {parseLocalDateString(bouquet.receivedDate).toLocaleDateString(undefined, {
               year: "numeric",
               month: "long",
               day: "numeric",
@@ -267,82 +277,73 @@ export function BouquetDetailPage() {
             </div>
           </div>
         )}
-        {saveError && <p className="mt-3 text-sm text-[var(--color-rose)]">{saveError}</p>}
 
-        <div className="mt-8 flex flex-col gap-2">
-          {isEditing ? (
-            <>
+        {!isEditing && (
+          <div className="mt-8 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => navigate(`/garden?editBouquet=${bouquet.id}`)}
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] text-sm font-semibold text-white active:scale-95"
+            >
+              <MapPin size={15} /> {t("detail.editBouquet")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-[var(--color-line)] text-sm font-medium text-[var(--color-ink)]"
+            >
+              <Pencil size={15} /> {t("detail.editInfo")}
+            </button>
+            {bouquet.placement && (
               <button
                 type="button"
-                onClick={handleSaveEdit}
-                className="min-h-[44px] w-full rounded-full bg-[var(--color-rose)] text-sm font-semibold text-white shadow-md shadow-[var(--color-rose)]/30 active:scale-95"
-              >
-                {t("detail.saveChanges")}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditing(false);
-                  setEditedImageUrl(null);
-                  setPhotoError(null);
+                onClick={async () => {
+                  await removePlacement(bouquet.id);
+                  show(t("detail.removedFromGardenToast"), "info");
                 }}
-                className="min-h-[44px] w-full rounded-full border border-[var(--color-line)] text-sm font-medium text-[var(--color-ink)]"
+                className="min-h-[44px] w-full rounded-full text-sm font-medium text-[var(--color-muted)]"
               >
-                {t("common.cancel")}
+                {t("detail.removeFromGarden")}
               </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setIsEditing(true)}
-                className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] text-sm font-semibold text-white active:scale-95"
-              >
-                <Pencil size={15} /> {t("detail.editBouquet")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowMove((v) => !v)}
-                className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-[var(--color-line)] text-sm font-medium text-[var(--color-ink)]"
-              >
-                <MapPin size={15} /> {bouquet.placement ? t("detail.moveInGarden") : t("detail.placeInGarden")}
-              </button>
-              {bouquet.placement && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await removePlacement(bouquet.id);
-                    show(t("detail.removedFromGardenToast"), "info");
-                  }}
-                  className="min-h-[44px] w-full rounded-full text-sm font-medium text-[var(--color-muted)]"
-                >
-                  {t("detail.removeFromGarden")}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(true)}
-                className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full text-sm font-medium text-[var(--color-rose)]"
-              >
-                <Trash2 size={15} /> {t("detail.deleteBouquet")}
-              </button>
-            </>
-          )}
-        </div>
-
-        {showMove && (
-          <div className="mt-6 -mx-5 rounded-[24px] border border-[var(--color-line)] bg-white py-4">
-            <GardenPlacementPicker
-              bouquetId={bouquet.id}
-              onPlaced={() => {
-                setShowMove(false);
-                show(t("detail.movedToast"));
-              }}
-              onSkip={() => setShowMove(false)}
-            />
+            )}
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full text-sm font-medium text-[var(--color-rose)]"
+            >
+              <Trash2 size={15} /> {t("detail.deleteBouquet")}
+            </button>
           </div>
         )}
       </div>
+
+      {isEditing && (
+        <BouquetMemoryActions
+          isFavorite={memory.isFavorite}
+          onToggleFavorite={() => setMemoryState((m) => ({ ...m, isFavorite: !m.isFavorite }))}
+          onSave={handleSaveEdit}
+          isSaving={isSavingEdit}
+          disabled={!canSaveEdit}
+          saveLabel={t("detail.saveChanges")}
+          errorMessage={saveError}
+        />
+      )}
+      {isEditing && (
+        <div className="px-5 pt-3">
+          <button
+            type="button"
+            onClick={() => {
+              setIsEditing(false);
+              setEditedImageUrl(null);
+              setPhotoError(null);
+              setSaveError(null);
+            }}
+            className="min-h-[44px] w-full rounded-full border border-[var(--color-line)] text-sm font-medium text-[var(--color-ink)]"
+          >
+            {t("common.cancel")}
+          </button>
+        </div>
+      )}
 
       <ConfirmationDialog
         open={confirmDelete}

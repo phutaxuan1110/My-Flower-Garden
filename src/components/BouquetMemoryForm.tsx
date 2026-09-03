@@ -1,6 +1,6 @@
-import { Heart } from "lucide-react";
 import { FramePicker } from "./FramePicker";
 import { useLanguage } from "../i18n/LanguageProvider";
+import { todayLocalDateString } from "../lib/date";
 import { OCCASIONS } from "../types";
 import type { FrameStyle, Occasion } from "../types";
 import type { TranslationKey } from "../i18n/translations";
@@ -60,38 +60,38 @@ export function BouquetMemoryForm({ value, onChange, imageUrl }: BouquetMemoryFo
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={LABEL_CLASS} htmlFor="bouquet-date">
-            {t("add.memory.date")}
-          </label>
-          <input
-            id="bouquet-date"
-            type="date"
-            className={FIELD_CLASS}
-            value={value.receivedDate}
-            max={new Date().toISOString().slice(0, 10)}
-            onChange={(e) => onChange({ receivedDate: e.target.value })}
-          />
-        </div>
-        <div>
-          <label className={LABEL_CLASS} htmlFor="bouquet-occasion">
-            {t("add.memory.occasion")}
-          </label>
-          <select
-            id="bouquet-occasion"
-            className={FIELD_CLASS}
-            value={value.occasion ?? ""}
-            onChange={(e) => onChange({ occasion: (e.target.value || undefined) as Occasion | undefined })}
-          >
-            <option value="">{t("add.memory.selectPlaceholder")}</option>
-            {OCCASIONS.map((o) => (
-              <option key={o} value={o}>
-                {t(OCCASION_KEYS[o])}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Date and Occasion each get their own full-width row — a shared row
+          previously crowded these on narrow iPhones (see reported screenshot). */}
+      <div>
+        <label className={LABEL_CLASS} htmlFor="bouquet-date">
+          {t("add.memory.date")}
+        </label>
+        <input
+          id="bouquet-date"
+          type="date"
+          className={FIELD_CLASS}
+          value={value.receivedDate}
+          max={todayLocalDateString()}
+          onChange={(e) => onChange({ receivedDate: e.target.value })}
+        />
+      </div>
+      <div>
+        <label className={LABEL_CLASS} htmlFor="bouquet-occasion">
+          {t("add.memory.occasion")}
+        </label>
+        <select
+          id="bouquet-occasion"
+          className={FIELD_CLASS}
+          value={value.occasion ?? ""}
+          onChange={(e) => onChange({ occasion: (e.target.value || undefined) as Occasion | undefined })}
+        >
+          <option value="">{t("add.memory.selectPlaceholder")}</option>
+          {OCCASIONS.map((o) => (
+            <option key={o} value={o}>
+              {t(OCCASION_KEYS[o])}
+            </option>
+          ))}
+        </select>
       </div>
 
       {value.occasion === "Custom" && (
@@ -147,20 +147,6 @@ export function BouquetMemoryForm({ value, onChange, imageUrl }: BouquetMemoryFo
           placeholder={t("add.memory.overallMeaningPlaceholder")}
         />
       </div>
-
-      <button
-        type="button"
-        onClick={() => onChange({ isFavorite: !value.isFavorite })}
-        aria-pressed={value.isFavorite}
-        className={`flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border text-sm font-medium transition-colors ${
-          value.isFavorite
-            ? "border-[var(--color-rose)] bg-[var(--color-rose)]/10 text-[var(--color-rose)]"
-            : "border-[var(--color-line)] text-[var(--color-ink)]"
-        }`}
-      >
-        <Heart size={15} fill={value.isFavorite ? "currentColor" : "none"} />
-        {value.isFavorite ? t("add.memory.markedFavorite") : t("add.memory.markFavorite")}
-      </button>
     </div>
   );
 }

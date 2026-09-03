@@ -5,6 +5,7 @@ import { BouquetCard } from "../components/BouquetCard";
 import { CollectionGridSkeleton } from "../components/LoadingSkeleton";
 import { useGarden } from "../store/GardenProvider";
 import { useLanguage } from "../i18n/LanguageProvider";
+import { parseLocalDateString } from "../lib/date";
 import { OCCASIONS } from "../types";
 import type { Occasion } from "../types";
 import type { TranslationKey } from "../i18n/translations";
@@ -44,7 +45,7 @@ export function CollectionPage() {
       list = list.filter((b) => b.occasion === occasionFilter);
     }
     list.sort((a, b) => {
-      const diff = new Date(a.receivedDate).getTime() - new Date(b.receivedDate).getTime();
+      const diff = parseLocalDateString(a.receivedDate).getTime() - parseLocalDateString(b.receivedDate).getTime();
       return sortMode === "newest" ? -diff : diff;
     });
     return list;

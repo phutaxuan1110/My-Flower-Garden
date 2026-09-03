@@ -1,10 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+    />
     <meta name="theme-color" content="#FCD0DA" />
+
+    <!-- iOS "Add to Home Screen" standalone mode. iOS Safari does not support
+         the display-mode manifest property reliably, so these Apple-specific
+         tags are required in addition to manifest.webmanifest for the app to
+         launch without the Safari address bar / toolbar once installed. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="My Flower Garden" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
     <meta
       name="description"
       content="My Flower Garden — save every bouquet, discover what it means, and grow a garden of memories."

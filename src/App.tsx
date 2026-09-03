@@ -3,6 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import { GardenProvider, useGarden } from "./store/GardenProvider";
 import { ToastProvider } from "./hooks/useToast";
 import { AddFlowProvider, useAddFlow } from "./hooks/useAddFlow";
+import { GardenEditModeProvider } from "./hooks/useGardenEditMode";
 import { LanguageProvider } from "./i18n/LanguageProvider";
 import { MobileAppShell } from "./components/MobileAppShell";
 import { AddBouquetSheet } from "./components/AddBouquetSheet";
@@ -23,7 +24,7 @@ function OnboardingGate() {
   const location = useLocation();
 
   if (loading) {
-    return <div className="min-h-screen bg-[var(--color-bg)]" />;
+    return <div className="min-h-dvh bg-[var(--color-bg)]" />;
   }
 
   if (!onboardingComplete && location.pathname !== "/onboarding") {
@@ -60,8 +61,10 @@ export default function App() {
         <GardenProvider>
           <ToastProvider>
             <AddFlowProvider>
-              <OnboardingGate />
-              <AddBouquetHost />
+              <GardenEditModeProvider>
+                <OnboardingGate />
+                <AddBouquetHost />
+              </GardenEditModeProvider>
             </AddFlowProvider>
           </ToastProvider>
         </GardenProvider>

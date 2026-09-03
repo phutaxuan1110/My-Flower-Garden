@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { BookHeart } from "lucide-react";
 import { GardenHeader } from "../components/GardenHeader";
 import { BouquetCounter } from "../components/BouquetCounter";
@@ -7,18 +7,44 @@ import { GardenAreaSwitcher } from "../components/GardenAreaSwitcher";
 import { EmptyGardenState } from "../components/EmptyGardenState";
 import { GardenSkeleton } from "../components/LoadingSkeleton";
 import { BouquetQuickView } from "../components/BouquetQuickView";
+import { GardenEditView } from "../components/GardenEditView";
 import { useGarden } from "../store/GardenProvider";
 import { useLanguage } from "../i18n/LanguageProvider";
+import { useGardenEditMode } from "../hooks/useGardenEditMode";
 
 export function GardenPage() {
-  const { loading, profile, bouquets, gardenAreas, totalCount, speciesCount, toggleFavorite } = useGarden();
+  const { loading, profile, bouquets, gardenAreas, totalCount, speciesCount, toggleFavorite, getBouquet } =
+    useGarden();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const gardenEdit = useGardenEditMode();
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
 
   const bouquetsById = useMemo(() => new Map(bouquets.map((b) => [b.id, b])), [bouquets]);
   const placements = useMemo(() => bouquets.filter((b) => b.placement).map((b) => b.placement!), [bouquets]);
   const quickViewBouquet = quickViewId ? bouquetsById.get(quickViewId) ?? null : null;
+
+  // Deep link from Bouquet Detail's "Chỉnh sửa bó hoa": /garden?editBouquet=<id>
+  useEffect(() => {
+    const editId = searchParams.get("editBouquet");
+    if (editId && !gardenEdit.isActive) {
+      gardenEdit.enter(editId);
+      searchParams.delete("editBouquet");
+      setSearchParams(searchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  if (gardenEdit.isActive) {
+    const targetBouquet = gardenEdit.targetBouquetId ? getBouquet(gardenEdit.targetBouquetId) : undefined;
+    if (!targetBouquet) {
+      // Bouquet vanished (e.g. deleted in another tab) — leave edit mode safely.
+      gardenEdit.exit();
+      return null;
+    }
+    return <GardenEditView targetBouquet={targetBouquet} onExit={gardenEdit.exit} />;
+  }
 
   if (loading) {
     return (

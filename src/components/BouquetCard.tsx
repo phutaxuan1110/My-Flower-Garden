@@ -1,6 +1,7 @@
 import { Heart, MapPin } from "lucide-react";
 import { BouquetFrame } from "./BouquetFrame";
 import { useLanguage } from "../i18n/LanguageProvider";
+import { parseLocalDateString } from "../lib/date";
 import type { BouquetWithFlowers } from "../types";
 
 interface BouquetCardProps {
@@ -40,7 +41,7 @@ export function BouquetCard({ bouquet, onOpen, onToggleFavorite }: BouquetCardPr
           <p className="truncate font-display text-[15px] text-[var(--color-ink)]">{bouquet.name}</p>
           <p className="mt-0.5 truncate text-xs text-[var(--color-muted)]">
             {speciesLabel || t("collection.noSpeciesYet")} ·{" "}
-            {new Date(bouquet.receivedDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+            {parseLocalDateString(bouquet.receivedDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
           </p>
         </div>
       </button>

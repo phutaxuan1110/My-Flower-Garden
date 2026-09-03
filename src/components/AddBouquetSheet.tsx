@@ -8,10 +8,12 @@ import { AIAnalysisState } from "./AIAnalysisState";
 import { DetectedFlowerCard } from "./DetectedFlowerCard";
 import { BouquetMemoryForm } from "./BouquetMemoryForm";
 import type { MemoryFormState } from "./BouquetMemoryForm";
+import { BouquetMemoryActions } from "./BouquetMemoryActions";
 import { GardenPlacementPicker } from "./GardenPlacementPicker";
 import { ErrorState } from "./ErrorState";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import { compressImageToDataUrl, validateImageFile, ImageValidationError } from "../lib/image";
+import { todayLocalDateString } from "../lib/date";
 import { flowerAIService } from "../lib/aiService";
 import { makeId } from "../lib/id";
 import { useGarden } from "../store/GardenProvider";
@@ -36,10 +38,6 @@ interface EditableFlower extends DetectedFlower {
   source: "ai" | "user";
 }
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
   const { createBouquet } = useGarden();
   const { show } = useToast();
@@ -61,7 +59,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
 
   const [memory, setMemory] = useState<MemoryFormState>({
     name: "",
-    receivedDate: todayIso(),
+    receivedDate: todayLocalDateString(),
     isFavorite: false,
     frameStyle: "arch",
   });
@@ -200,7 +198,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 40, opacity: 0 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="flex h-[92vh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-[32px] bg-[var(--color-bg)] md:h-[85vh] md:rounded-[32px]"
+        className="sheet-fill-height flex w-full max-w-[480px] flex-col overflow-hidden rounded-t-[32px] bg-[var(--color-bg)] md:rounded-[32px]"
       >
         <header className="safe-top flex items-center justify-between border-b border-[var(--color-line)] bg-[var(--color-bg)] px-4 py-3">
           {step !== "source" && step !== "success" && step !== "analyzing" ? (
@@ -341,33 +339,11 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
               )}
 
               {step === "memory" && imageDataUrl && (
-                <div>
-                  <BouquetMemoryForm
-                    value={memory}
-                    onChange={(patch) => setMemory((m) => ({ ...m, ...patch }))}
-                    imageUrl={imageDataUrl}
-                  />
-                  <div className="px-5">
-                    {saveError && (
-                      <p className="mt-4 text-sm text-[var(--color-rose)]" role="alert">
-                        {saveError}
-                      </p>
-                    )}
-                    <button
-                      type="button"
-                      disabled={!canSave || isSaving}
-                      onClick={handleSave}
-                      className="mt-5 min-h-[44px] w-full rounded-full bg-[var(--color-rose)] text-sm font-semibold text-white shadow-md shadow-[var(--color-rose)]/30 transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      {isSaving ? t("add.memory.saving") : t("add.memory.save")}
-                    </button>
-                    {!canSave && !isSaving && (
-                      <p className="mt-2 text-center text-xs text-[var(--color-muted)]">
-                        {memory.name.trim().length === 0 ? t("add.memory.needName") : t("add.memory.needFlower")}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                <BouquetMemoryForm
+                  value={memory}
+                  onChange={(patch) => setMemory((m) => ({ ...m, ...patch }))}
+                  imageUrl={imageDataUrl}
+                />
               )}
 
               {step === "placement" && createdBouquetId && (
@@ -427,6 +403,24 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
             </motion.div>
           </AnimatePresence>
         </div>
+
+        {step === "memory" && (
+          <BouquetMemoryActions
+            isFavorite={memory.isFavorite}
+            onToggleFavorite={() => setMemory((m) => ({ ...m, isFavorite: !m.isFavorite }))}
+            onSave={handleSave}
+            isSaving={isSaving}
+            disabled={!canSave}
+            errorMessage={
+              saveError ??
+              (!canSave
+                ? memory.name.trim().length === 0
+                  ? t("add.memory.needName")
+                  : t("add.memory.needFlower")
+                : null)
+            }
+          />
+        )}
       </motion.div>
 
       <ConfirmationDialog
