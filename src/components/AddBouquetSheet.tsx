@@ -132,12 +132,9 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
     ]);
   }
 
-  const canSave =
-    Boolean(imageDataUrl) &&
-    memory.name.trim().length > 0 &&
-    flowers.length > 0 &&
-    flowers.every((f) => f.commonName.trim().length > 0) &&
-    (detectionStatus === "completed" || detectionStatus === "manual");
+  // The photo/review steps already validate the bouquet before this form is
+  // shown. On the memory step, the bouquet name is the only required field.
+  const canSave = Boolean(imageDataUrl) && memory.name.trim().length > 0;
 
   async function handleSave() {
     if (!canSave || !imageDataUrl || isSaving) return;
@@ -199,7 +196,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
         transition={{ duration: 0.3, ease: "easeOut" }}
         className="sheet-fill-height flex w-full max-w-[480px] flex-col overflow-hidden rounded-t-[32px] bg-[var(--color-bg)] md:rounded-[32px]"
       >
-        <header className="safe-top grid grid-cols-[44px_minmax(0,1fr)_44px] items-center border-b border-[var(--color-line)] bg-[var(--color-bg)] px-4 py-3">
+        <header className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center border-b border-[var(--color-line)] bg-[var(--color-bg)] px-4 py-3">
           {step !== "source" && step !== "success" && step !== "analyzing" ? (
             <button
               type="button"
@@ -411,7 +408,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
             onSave={handleSave}
             isSaving={isSaving}
             disabled={!canSave}
-            errorMessage={saveError ?? (memory.name.trim() && flowers.length === 0 ? t("add.memory.needFlower") : null)}
+            errorMessage={saveError}
           />
         )}
       </motion.div>

@@ -233,7 +233,7 @@ const dict = {
   "add.memory.selectPlaceholder": { vi: "Chọn…", en: "Select…" },
   "add.memory.customOccasion": { vi: "Mô tả dịp này", en: "Describe the occasion" },
   "add.memory.customOccasionPlaceholder": { vi: "VD: Buổi hẹn đầu tiên", en: "e.g. First date" },
-  "add.memory.from": { vi: "Từ (không bắt buộc)", en: "From (optional)" },
+  "add.memory.from": { vi: "Người tặng", en: "Gift giver" },
   "add.memory.fromPlaceholder": { vi: "Ai đã tặng bạn bó hoa này?", en: "Who gave you these flowers?" },
   "add.memory.note": { vi: "Ghi chú cá nhân", en: "Personal note" },
   "add.memory.notePlaceholder": { vi: "Điều gì khiến khoảnh khắc này đáng nhớ?", en: "What made this moment memorable?" },

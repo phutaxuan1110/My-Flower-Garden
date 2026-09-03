@@ -50,7 +50,7 @@ export function MobileAppShell({ children }: { children: React.ReactNode }) {
   const hideChrome = isGardenEditActive || isEnteringGardenEdit || isBouquetDetail;
 
   return (
-    <div className="h-dvh overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)] md:h-auto md:min-h-dvh md:overflow-visible md:flex md:items-center md:justify-center md:py-10">
+    <div className="full-bleed-height overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)] md:h-auto md:min-h-dvh md:overflow-visible md:flex md:items-center md:justify-center md:py-10">
       <div className="paper-grain relative mx-auto flex h-full w-full max-w-[480px] flex-col bg-[var(--color-bg)] md:h-auto md:min-h-[880px] md:rounded-[36px] md:shadow-2xl md:shadow-[var(--color-rose)]/15 md:ring-1 md:ring-[var(--color-line)]">
         <div className={`no-scrollbar flex-1 overflow-y-auto ${hideChrome ? "" : "app-content-padding"}`}>
           {children}

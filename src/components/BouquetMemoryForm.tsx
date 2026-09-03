@@ -61,7 +61,7 @@ export function BouquetMemoryForm({ value, onChange, imageUrl }: BouquetMemoryFo
 
       {/* Date and Occasion each get their own full-width row — a shared row
           previously crowded these on narrow iPhones (see reported screenshot). */}
-      <div className="w-full min-w-0">
+      <div className="w-full min-w-0 overflow-hidden">
         <label className={LABEL_CLASS} htmlFor="bouquet-date">
           {t("add.memory.date")}
         </label>

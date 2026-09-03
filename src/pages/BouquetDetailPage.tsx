@@ -158,7 +158,9 @@ export function BouquetDetailPage() {
     }
   }
 
-  const canSaveEdit = memory.name.trim().length > 0 && editableFlowers.length > 0;
+  // Flowers and memory details may remain empty; only the bouquet name is
+  // required to save edits.
+  const canSaveEdit = memory.name.trim().length > 0;
 
   async function handleSaveEdit() {
     if (!canSaveEdit || isSavingEdit) return;

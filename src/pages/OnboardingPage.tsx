@@ -35,7 +35,7 @@ export function OnboardingPage() {
     // rubber-band/overscroll to reveal `body`'s background color above it.
     // The previous `min-h-screen` (100vh, normal document flow) had no such
     // guarantee, which is what produced the white gap above the status bar.
-    <div className="full-bleed-height w-full overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)]">
+    <div className="full-bleed-height fixed inset-0 w-full overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)]">
       {/* Safe-area-aware content container: padding only (never a separate
           background), so the gradient above stays continuous behind the
           safe areas while Skip/CTA still clear the notch and Home
