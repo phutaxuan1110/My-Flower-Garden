@@ -31,7 +31,7 @@
     height: 100%;
     min-height: 100%;
     margin: 0;
-    background-color: var(--color-blush);
+    background-color: var(--color-bg);
   }
 
   :root {
@@ -146,6 +146,14 @@
   .full-bleed-height {
     height: 100vh;
     height: 100dvh;
+  }
+
+  /* Extend bouquet photos behind the iOS status bar without changing the
+     visual height of the hero below the safe area. The floating controls
+     remain positioned from the safe-area inset independently. */
+  .bouquet-detail-hero {
+    height: calc(min(133.333vw, 640px) + env(safe-area-inset-top));
+    margin-top: calc(-1 * env(safe-area-inset-top));
   }
   @media (min-width: 768px) {
     .sheet-fill-height {

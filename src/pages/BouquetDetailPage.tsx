@@ -207,7 +207,7 @@ export function BouquetDetailPage() {
       style={{ paddingBottom: `calc(${isEditing ? "144px" : "112px"} + env(safe-area-inset-bottom))` }}
     >
       <div className="relative">
-        <div className="aspect-[3/4] w-full overflow-hidden bg-[var(--color-blush)]">
+        <div className="bouquet-detail-hero w-full overflow-hidden bg-[var(--color-blush)]">
           <img src={displayImageUrl} alt={bouquet.name} className="h-full w-full object-cover object-center" />
         </div>
       </div>
