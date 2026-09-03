@@ -153,7 +153,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
         customOccasion: memory.customOccasion,
         giftedBy: memory.giftedBy,
         personalNote: memory.personalNote,
-        overallMeaning: memory.overallMeaning || overallMeaning,
+        overallMeaning,
         isFavorite: memory.isFavorite,
         detectionStatus,
         frameStyle: memory.frameStyle,
@@ -200,25 +200,27 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
         transition={{ duration: 0.3, ease: "easeOut" }}
         className="sheet-fill-height flex w-full max-w-[480px] flex-col overflow-hidden rounded-t-[32px] bg-[var(--color-bg)] md:rounded-[32px]"
       >
-        <header className="safe-top flex items-center justify-between border-b border-[var(--color-line)] bg-[var(--color-bg)] px-4 py-3">
+        <header className="safe-top grid grid-cols-[44px_minmax(0,1fr)_44px] items-center border-b border-[var(--color-line)] bg-[var(--color-bg)] px-4 py-3">
           {step !== "source" && step !== "success" && step !== "analyzing" ? (
             <button
               type="button"
               onClick={goBack}
               aria-label={t("common.back")}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-ink)]"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--color-ink)]"
             >
               <ArrowLeft size={19} />
             </button>
           ) : (
-            <span className="w-9" />
+            <span aria-hidden="true" className="h-11 w-11" />
           )}
-          <h2 className="font-display text-base text-[var(--color-ink)]">{t(STEP_TITLE_KEYS[step])}</h2>
+          <h2 className="min-w-0 truncate px-2 text-center font-display text-base text-[var(--color-ink)]">
+            {t(STEP_TITLE_KEYS[step])}
+          </h2>
           <button
             type="button"
             onClick={requestClose}
             aria-label={t("common.close")}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-ink)]"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--color-ink)]"
           >
             <X size={19} />
           </button>
@@ -411,14 +413,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
             onSave={handleSave}
             isSaving={isSaving}
             disabled={!canSave}
-            errorMessage={
-              saveError ??
-              (!canSave
-                ? memory.name.trim().length === 0
-                  ? t("add.memory.needName")
-                  : t("add.memory.needFlower")
-                : null)
-            }
+            errorMessage={saveError ?? (memory.name.trim() && flowers.length === 0 ? t("add.memory.needFlower") : null)}
           />
         )}
       </motion.div>

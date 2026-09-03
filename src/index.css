@@ -67,6 +67,17 @@
   input, textarea {
     font-family: inherit;
   }
+
+  input[type="date"].bouquet-date-field {
+    inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+  }
+
+  input[type="date"].bouquet-date-field::-webkit-date-and-time-value {
+    min-width: 0;
+    text-align: left;
+  }
 }
 
 @layer utilities {

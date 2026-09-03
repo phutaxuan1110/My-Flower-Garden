@@ -10,7 +10,6 @@ import { BouquetMemoryForm } from "../components/BouquetMemoryForm";
 import type { MemoryFormState } from "../components/BouquetMemoryForm";
 import { BouquetMemoryActions } from "../components/BouquetMemoryActions";
 import { DetectedFlowerCard } from "../components/DetectedFlowerCard";
-import { BouquetFrame } from "../components/BouquetFrame";
 import { ImageUploader } from "../components/ImageUploader";
 import { compressImageToDataUrl, validateImageFile, ImageValidationError } from "../lib/image";
 import { parseLocalDateString } from "../lib/date";
@@ -51,10 +50,37 @@ export function BouquetDetailPage() {
     giftedBy: bouquet?.giftedBy,
     personalNote: bouquet?.personalNote,
     isFavorite: bouquet?.isFavorite ?? false,
-    overallMeaning: bouquet?.overallMeaning,
     frameStyle: bouquet?.frameStyle ?? "arch",
   });
   const [editableFlowers, setEditableFlowers] = useState(bouquet?.flowers ?? []);
+
+  function resetEditDraft() {
+    if (!bouquet) return;
+    setMemoryState({
+      name: bouquet.name,
+      receivedDate: bouquet.receivedDate.slice(0, 10),
+      occasion: bouquet.occasion,
+      customOccasion: bouquet.customOccasion,
+      giftedBy: bouquet.giftedBy,
+      personalNote: bouquet.personalNote,
+      isFavorite: bouquet.isFavorite,
+      frameStyle: bouquet.frameStyle,
+    });
+    setEditableFlowers(bouquet.flowers);
+    setEditedImageUrl(null);
+    setPhotoError(null);
+    setSaveError(null);
+  }
+
+  function openEditForm() {
+    resetEditDraft();
+    setIsEditing(true);
+  }
+
+  function cancelEdit() {
+    resetEditDraft();
+    setIsEditing(false);
+  }
 
   useEffect(() => {
     if (searchParams.get("edit") === "1") {
@@ -121,7 +147,6 @@ export function BouquetDetailPage() {
           customOccasion: memory.customOccasion,
           giftedBy: memory.giftedBy,
           personalNote: memory.personalNote,
-          overallMeaning: memory.overallMeaning,
           isFavorite: memory.isFavorite,
           frameStyle: memory.frameStyle,
           imageUrl: editedImageUrl ?? bouquet!.imageUrl,
@@ -150,16 +175,20 @@ export function BouquetDetailPage() {
   const displayImageUrl = editedImageUrl ?? bouquet.imageUrl;
 
   return (
-    <div className={isEditing ? "pb-4" : "pb-8"}>
+    <div
+      className={isEditing ? "pb-4" : undefined}
+      style={isEditing ? undefined : { paddingBottom: "calc(112px + env(safe-area-inset-bottom))" }}
+    >
       <div className="relative">
-        <div className="aspect-[4/3] w-full bg-[var(--color-blush)] p-6">
-          <BouquetFrame imageUrl={displayImageUrl} frameStyle={isEditing ? memory.frameStyle : bouquet.frameStyle} alt={bouquet.name} className="h-full w-full" />
+        <div className="w-full bg-[var(--color-blush)]">
+          <img src={displayImageUrl} alt={bouquet.name} className="block h-auto w-full max-w-full" />
         </div>
         <button
           type="button"
           onClick={() => navigate(-1)}
           aria-label={t("common.back")}
-          className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[var(--color-ink)] shadow-sm"
+          className="absolute left-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[var(--color-ink)] shadow-sm backdrop-blur-sm"
+          style={{ top: "max(1rem, env(safe-area-inset-top))" }}
         >
           <ArrowLeft size={18} />
         </button>
@@ -168,7 +197,8 @@ export function BouquetDetailPage() {
             type="button"
             onClick={() => toggleFavorite(bouquet.id)}
             aria-label={bouquet.isFavorite ? t("bouquet.removeFromFavorites") : t("bouquet.addToFavorites")}
-            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[var(--color-rose)] shadow-sm"
+            className="absolute right-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[var(--color-rose)] shadow-sm backdrop-blur-sm"
+            style={{ top: "max(1rem, env(safe-area-inset-top))" }}
           >
             <Heart size={18} fill={bouquet.isFavorite ? "currentColor" : "none"} />
           </button>
@@ -280,20 +310,6 @@ export function BouquetDetailPage() {
 
         {!isEditing && (
           <div className="mt-8 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => navigate(`/garden?editBouquet=${bouquet.id}`)}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] text-sm font-semibold text-white active:scale-95"
-            >
-              <MapPin size={15} /> {t("detail.editBouquet")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsEditing(true)}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-[var(--color-line)] text-sm font-medium text-[var(--color-ink)]"
-            >
-              <Pencil size={15} /> {t("detail.editInfo")}
-            </button>
             {bouquet.placement && (
               <button
                 type="button"
@@ -332,16 +348,32 @@ export function BouquetDetailPage() {
         <div className="px-5 pt-3">
           <button
             type="button"
-            onClick={() => {
-              setIsEditing(false);
-              setEditedImageUrl(null);
-              setPhotoError(null);
-              setSaveError(null);
-            }}
+            onClick={cancelEdit}
             className="min-h-[44px] w-full rounded-full border border-[var(--color-line)] text-sm font-medium text-[var(--color-ink)]"
           >
             {t("common.cancel")}
           </button>
+        </div>
+      )}
+
+      {!isEditing && (
+        <div className="fixed bottom-0 left-1/2 z-20 w-full max-w-[480px] -translate-x-1/2 border-t border-[var(--color-line)] bg-[var(--color-bg)]/95 px-5 pt-3 shadow-[0_-8px_24px_rgba(74,53,64,0.08)] backdrop-blur-md safe-bottom md:absolute">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(`/garden?editBouquet=${bouquet.id}`)}
+              className="flex min-h-[48px] flex-[0_0_40%] items-center justify-center gap-2 rounded-full border border-[var(--color-line)] bg-white text-sm font-medium text-[var(--color-ink)] active:scale-95"
+            >
+              <MapPin size={16} /> {t("detail.editBouquet")}
+            </button>
+            <button
+              type="button"
+              onClick={openEditForm}
+              className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-full bg-[var(--color-ink)] text-sm font-semibold text-white shadow-sm active:scale-95"
+            >
+              <Pencil size={16} /> {t("detail.editInfo")}
+            </button>
+          </div>
         </div>
       )}
 

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { BookHeart } from "lucide-react";
 import { GardenHeader } from "../components/GardenHeader";
 import { BouquetCounter } from "../components/BouquetCounter";
 import { GardenAreaSwitcher } from "../components/GardenAreaSwitcher";
@@ -9,13 +8,11 @@ import { GardenSkeleton } from "../components/LoadingSkeleton";
 import { BouquetQuickView } from "../components/BouquetQuickView";
 import { GardenEditView } from "../components/GardenEditView";
 import { useGarden } from "../store/GardenProvider";
-import { useLanguage } from "../i18n/LanguageProvider";
 import { useGardenEditMode } from "../hooks/useGardenEditMode";
 
 export function GardenPage() {
   const { loading, profile, bouquets, gardenAreas, totalCount, speciesCount, toggleFavorite, getBouquet } =
     useGarden();
-  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const gardenEdit = useGardenEditMode();
@@ -82,27 +79,12 @@ export function GardenPage() {
       {totalCount === 0 ? (
         <EmptyGardenState />
       ) : (
-        <>
-          <GardenAreaSwitcher
-            areas={gardenAreas}
-            placements={placements}
-            bouquetsById={bouquetsById}
-            onOpenBouquet={setQuickViewId}
-          />
-          <div className="mx-5 mt-6 flex items-center justify-between rounded-[20px] border border-[var(--color-line)] bg-white/70 px-4 py-3">
-            <div className="flex items-center gap-2 text-sm text-[var(--color-ink)]">
-              <BookHeart size={16} className="text-[var(--color-rose)]" strokeWidth={1.75} />
-              {t("garden.collectionBanner")}
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate("/collection")}
-              className="min-h-[44px] shrink-0 rounded-full bg-[var(--color-blush)] px-3 text-xs font-semibold text-[var(--color-rose)]"
-            >
-              {t("garden.viewAll")}
-            </button>
-          </div>
-        </>
+        <GardenAreaSwitcher
+          areas={gardenAreas}
+          placements={placements}
+          bouquetsById={bouquetsById}
+          onOpenBouquet={setQuickViewId}
+        />
       )}
 
       <BouquetQuickView

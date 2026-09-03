@@ -46,8 +46,6 @@ const dict = {
     en: "Add your first bouquet and turn a beautiful moment into a memory that keeps growing.",
   },
   "garden.empty.cta": { vi: "Thêm bó hoa đầu tiên", en: "Add my first bouquet" },
-  "garden.collectionBanner": { vi: "Mọi bó hoa đều có trong Bộ sưu tập", en: "Every bouquet lives in your Collection too" },
-  "garden.viewAll": { vi: "Xem tất cả", en: "View all" },
 
   // Collection
   "collection.title": { vi: "Bộ sưu tập", en: "Collection" },
@@ -123,7 +121,7 @@ const dict = {
   "detail.personalNote": { vi: "Ghi chú cá nhân", en: "Personal note" },
   "detail.theFlowers": { vi: "Các loài hoa", en: "The flowers" },
   "detail.saveChanges": { vi: "Lưu thay đổi", en: "Save changes" },
-  "detail.editBouquet": { vi: "Chỉnh sửa bó hoa", en: "Edit bouquet" },
+  "detail.editBouquet": { vi: "Sắp xếp", en: "Arrange" },
   "detail.changePhoto": { vi: "Đổi ảnh bó hoa", en: "Change bouquet photo" },
   "detail.moveInGarden": { vi: "Di chuyển trong vườn", en: "Move in garden" },
   "detail.placeInGarden": { vi: "Đặt vào vườn", en: "Place in garden" },
@@ -140,7 +138,7 @@ const dict = {
   "detail.updatedToast": { vi: "Đã cập nhật bó hoa", en: "Bouquet updated" },
   "detail.editValidation": { vi: "Bó hoa cần có tên và ít nhất một loài hoa.", en: "A bouquet needs a name and at least one flower." },
   "detail.chooseFrame": { vi: "Chọn khung ảnh", en: "Choose a frame" },
-  "detail.editInfo": { vi: "Sửa thông tin bó hoa", en: "Edit bouquet info" },
+  "detail.editInfo": { vi: "Sửa thông tin", en: "Edit info" },
   "detail.editMemoryTitle": { vi: "Chỉnh sửa kỷ niệm", en: "Edit the memory" },
 
   // Garden edit mode (drag-and-drop repositioning)
@@ -235,17 +233,11 @@ const dict = {
   "add.memory.fromPlaceholder": { vi: "Ai đã tặng bạn bó hoa này?", en: "Who gave you these flowers?" },
   "add.memory.note": { vi: "Ghi chú cá nhân", en: "Personal note" },
   "add.memory.notePlaceholder": { vi: "Điều gì khiến khoảnh khắc này đáng nhớ?", en: "What made this moment memorable?" },
-  "add.memory.overallMeaning": { vi: "Ý nghĩa tổng thể của bó hoa", en: "Overall bouquet meaning" },
-  "add.memory.overallMeaningPlaceholder": {
-    vi: "Gợi ý từ các loài hoa bạn đã chọn — bạn có thể sửa lại",
-    en: "Suggested from the flowers you kept — feel free to change it",
-  },
   "add.memory.markFavorite": { vi: "Đánh dấu yêu thích", en: "Mark as favorite" },
   "add.memory.markedFavorite": { vi: "Đã đánh dấu yêu thích", en: "Marked as favorite" },
   "add.memory.chooseFrame": { vi: "Chọn khung ảnh cho bó hoa", en: "Choose a frame for your bouquet" },
   "add.memory.save": { vi: "Lưu", en: "Save" },
   "add.memory.saving": { vi: "Đang lưu…", en: "Saving…" },
-  "add.memory.needName": { vi: "Đặt tên cho bó hoa để lưu lại.", en: "Give your bouquet a name to save it." },
   "add.memory.needFlower": { vi: "Thêm ít nhất một loài hoa để lưu lại.", en: "Add at least one flower to save it." },
   "add.memory.saveFailed": {
     vi: "Không thể lưu bó hoa này. Ảnh và thông tin của bạn vẫn còn — vui lòng thử lại.",

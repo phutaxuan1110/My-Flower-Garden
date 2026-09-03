@@ -1,5 +1,5 @@
 import React from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { BottomNavigation } from "./BottomNavigation";
 import { useGardenEditMode } from "../hooks/useGardenEditMode";
 
@@ -43,9 +43,11 @@ import { useGardenEditMode } from "../hooks/useGardenEditMode";
  */
 export function MobileAppShell({ children }: { children: React.ReactNode }) {
   const { isActive: isGardenEditActive } = useGardenEditMode();
+  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   const isEnteringGardenEdit = searchParams.has("editBouquet");
-  const hideChrome = isGardenEditActive || isEnteringGardenEdit;
+  const isBouquetDetail = /^\/bouquet\/[^/]+\/?$/.test(pathname);
+  const hideChrome = isGardenEditActive || isEnteringGardenEdit || isBouquetDetail;
 
   return (
     <div className="h-dvh overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)] md:h-auto md:min-h-dvh md:overflow-visible md:flex md:items-center md:justify-center md:py-10">
