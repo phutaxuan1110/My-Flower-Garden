@@ -6,9 +6,16 @@ import gardenImage from "../assets/garden/my-flower-garden-empty.png";
 // their original position so they can sway. Every other "garden"-themed area
 // (order 2, 4, ...) still uses the plain, fully static `gardenImage` above.
 import gardenImageClean from "../assets/garden/my-flower-garden-empty-clean.png";
+// The river artwork itself is already free of any wisteria/lavender (nothing
+// needed to be painted out for this one), so unlike the garden pair above
+// there's a single river asset used everywhere theme is "river" — the first
+// river area (order 1) just gets RiverAmbientLayer's sprites added on top of
+// it for animation; every later river area shows the exact same artwork
+// without that extra layer.
 import riverImage from "../assets/garden/my-flower-garden-river.png";
 import type { GardenTheme } from "../lib/gardenLayout";
 import { GardenAmbientLayer } from "./GardenAmbientLayer";
+import { RiverAmbientLayer } from "./RiverAmbientLayer";
 
 /**
  * The garden's illustrated background. Rendered as a real <img> (not a CSS
@@ -23,8 +30,9 @@ export function GardenBackdrop({
   theme?: GardenTheme | string;
   ambientAnimation?: boolean;
 }) {
-  const showAmbient = theme === "garden" && ambientAnimation;
-  const src = theme === "river" ? riverImage : showAmbient ? gardenImageClean : gardenImage;
+  const showGardenAmbient = theme === "garden" && ambientAnimation;
+  const showRiverAmbient = theme === "river" && ambientAnimation;
+  const src = theme === "river" ? riverImage : showGardenAmbient ? gardenImageClean : gardenImage;
   return (
     <>
       <img
@@ -35,7 +43,8 @@ export function GardenBackdrop({
         draggable={false}
         onContextMenu={(e) => e.preventDefault()}
       />
-      {showAmbient && <GardenAmbientLayer />}
+      {showGardenAmbient && <GardenAmbientLayer />}
+      {showRiverAmbient && <RiverAmbientLayer />}
     </>
   );
 }

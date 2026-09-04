@@ -98,7 +98,7 @@ export function GardenAreaSwitcher({
                   placements={placements.filter((p) => p.gardenAreaId === area.id)}
                   bouquetsById={bouquetsById}
                   theme={area.theme}
-                  ambientAnimation={area.order === 0}
+                  ambientAnimation={area.order === 0 || area.order === 1}
                   onOpenBouquet={onOpenBouquet}
                 />
                 {/* Only the first garden is guaranteed to exist (and be unlocked)

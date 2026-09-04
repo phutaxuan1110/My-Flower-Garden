@@ -257,6 +257,33 @@
 .garden-ambient__sparkle--2 { animation: garden-glimmer-b 5.3s -3.2s ease-in-out infinite; }
 .garden-ambient__sparkle--3 { animation: garden-glimmer-a 4.8s -2.3s ease-in-out infinite; }
 
+/* Second-garden (river) ambient layer. Same mechanism as the first garden's
+   .garden-ambient__object above — real sprites, CSS-only sway/glimmer — just
+   with its own set of objects and origins since nothing here was painted out
+   of the backdrop (see RiverAmbientLayer.tsx for why). */
+.river-ambient__object {
+  display: block;
+  object-fit: contain;
+  will-change: transform;
+  filter: drop-shadow(0 0 0 transparent);
+}
+
+.river-ambient__wisteria--left { animation: garden-sway-b 7.2s -1.8s ease-in-out infinite; }
+.river-ambient__wisteria--right { animation: garden-sway-a 7.8s -4.1s ease-in-out infinite; }
+.river-ambient__lavender { animation: garden-sway-a 5.4s -2.6s ease-in-out infinite; }
+
+.river-ambient__glimmer {
+  display: block;
+  object-fit: contain;
+  transform-origin: center;
+  will-change: opacity, transform;
+}
+
+.river-ambient__glimmer--1 { animation: garden-glimmer-a 6.4s -1.1s ease-in-out infinite; }
+.river-ambient__glimmer--2 { animation: garden-glimmer-b 7.6s -3.8s ease-in-out infinite; }
+.river-ambient__glimmer--3 { animation: garden-glimmer-a 6.9s -0.6s ease-in-out infinite; }
+.river-ambient__glimmer--4 { animation: garden-glimmer-b 5.8s -2.9s ease-in-out infinite; }
+
 .garden-ambient__wind-line {
   stroke: rgba(255, 255, 255, 0.65);
   stroke-width: 1.4;
@@ -310,11 +337,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .garden-ambient__object,
+  .river-ambient__object,
   .garden-ambient__wind-line {
     animation: none !important;
   }
 
-  .garden-ambient__sparkle {
+  .garden-ambient__sparkle,
+  .river-ambient__glimmer {
     animation: none !important;
     opacity: 0.32;
     transform: none;
