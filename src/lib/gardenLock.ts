@@ -1,10 +1,9 @@
 // Sequential map/level unlock logic.
 //
-// The rule: a garden area is only ever created (see
-// GardenProvider.ensureAreaWithFreeSlot / materializeNextAreaIfNeeded) once
-// the area before it is completely full. That means every *real* GardenArea
-// the app already knows about is, by construction, unlocked — there is
-// nothing to check there.
+// The rule: a garden area is unlocked only after the area before it is
+// completely full. Current code creates areas at that boundary, but display
+// logic still enforces the rule because older data may contain an area that
+// was seeded early or duplicated.
 //
 // The one thing that doesn't exist yet in the data is the "next" area while
 // the current last area is still being filled — but the user should always
@@ -37,36 +36,50 @@ export function isAreaFull(area: Pick<GardenArea, "id">, placements: GardenPlace
 }
 
 /**
- * Real areas (sorted) + at most one trailing locked preview for the area
- * that will be created next, if the current last area isn't full yet.
+ * Consecutively unlocked real areas (sorted) + at most one trailing locked
+ * preview while the current last unlocked area is not full.
  */
 export function buildDisplayAreas(areas: GardenArea[], placements: GardenPlacement[]): DisplayGardenArea[] {
   const sorted = [...areas].sort((a, b) => a.order - b.order);
-  const result: DisplayGardenArea[] = sorted.map((area) => ({
+  const unlocked: GardenArea[] = [];
+
+  // Only expose the consecutive part of the progression that the user has
+  // actually unlocked. Older versions could create the next database row
+  // early (or turn a duplicated seed row into the next order), which made two
+  // unlocked copies of the same garden appear side by side. A real row is not
+  // enough to make an area visible: every preceding area must also be full.
+  for (const area of sorted) {
+    const previous = unlocked[unlocked.length - 1];
+    if (previous && !isAreaFull(previous, placements)) break;
+    unlocked.push(area);
+  }
+
+  const result: DisplayGardenArea[] = unlocked.map((area) => ({
     id: area.id,
     name: area.name,
     theme: area.theme,
     order: area.order,
     filledCount: countFilledSlots(area, placements),
     capacity: SLOTS_PER_GARDEN_AREA,
-    isLocked: false, // real areas only ever exist after the one before them is full
+    isLocked: false,
     isVirtual: false,
   }));
 
-  const last = sorted[sorted.length - 1];
+  const last = unlocked[unlocked.length - 1];
   const lastIsFull = last ? isAreaFull(last, placements) : false;
 
   if (!last || !lastIsFull) {
     const nextOrder = last ? last.order + 1 : 0;
+    const existingNext = sorted.find((area) => area.order === nextOrder);
     result.push({
-      id: `virtual-${nextOrder}`,
-      name: generateAreaName(nextOrder),
-      theme: themeForAreaOrder(nextOrder),
+      id: existingNext?.id ?? `virtual-${nextOrder}`,
+      name: existingNext?.name ?? generateAreaName(nextOrder),
+      theme: existingNext?.theme ?? themeForAreaOrder(nextOrder),
       order: nextOrder,
       filledCount: 0,
       capacity: SLOTS_PER_GARDEN_AREA,
       isLocked: Boolean(last), // area 0 (the very first) is never locked
-      isVirtual: !last ? false : true,
+      isVirtual: !existingNext,
     });
   }
 

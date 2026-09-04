@@ -32,18 +32,23 @@ export function GardenAreaSwitcher({ areas, placements, bouquetsById, onOpenBouq
       >
         {displayAreas.map((area) => (
           <div key={area.id} className="w-full shrink-0 snap-center px-2 first:pl-0 last:pr-0">
+            <p
+              aria-hidden={area.isLocked ? "true" : undefined}
+              className={`mb-2 font-display text-sm italic text-[var(--color-muted)] ${
+                area.isLocked ? "invisible" : ""
+              }`}
+            >
+              {area.isLocked ? "Garden" : area.name}
+            </p>
             {area.isLocked ? (
               <LockedGardenArea />
             ) : (
-              <>
-                <p className="mb-2 font-display text-sm italic text-[var(--color-muted)]">{area.name}</p>
-                <GardenCanvas
-                  placements={placements.filter((p) => p.gardenAreaId === area.id)}
-                  bouquetsById={bouquetsById}
-                  theme={area.theme}
-                  onOpenBouquet={onOpenBouquet}
-                />
-              </>
+              <GardenCanvas
+                placements={placements.filter((p) => p.gardenAreaId === area.id)}
+                bouquetsById={bouquetsById}
+                theme={area.theme}
+                onOpenBouquet={onOpenBouquet}
+              />
             )}
           </div>
         ))}

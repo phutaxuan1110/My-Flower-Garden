@@ -13,7 +13,7 @@ export function BottomNavigation() {
   return (
     <nav
       aria-label="Primary"
-      className="safe-bottom absolute inset-x-0 bottom-0 z-40 border-t border-[var(--color-line)] bg-white/90 backdrop-blur"
+      className="safe-bottom fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-[480px] border-t border-[var(--color-line)] bg-white/90 backdrop-blur md:absolute"
     >
       <div className="relative mx-auto flex max-w-[480px] items-stretch px-2">
         <NavLink
