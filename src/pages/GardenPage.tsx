@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { GardenHeader } from "../components/GardenHeader";
 import { BouquetCounter } from "../components/BouquetCounter";
 import { GardenAreaSwitcher } from "../components/GardenAreaSwitcher";
-import { EmptyGardenState } from "../components/EmptyGardenState";
 import { GardenSkeleton } from "../components/LoadingSkeleton";
 import { BouquetQuickView } from "../components/BouquetQuickView";
 import { GardenEditView } from "../components/GardenEditView";
@@ -122,18 +121,15 @@ export function GardenPage() {
       <GardenHeader displayName={profile?.displayName ?? "Friend"} gardenName={profile?.gardenName ?? "My Flower Garden"} />
       <BouquetCounter totalCount={totalCount} speciesCount={speciesCount} />
 
-      {totalCount === 0 ? (
-        <EmptyGardenState />
-      ) : (
-        <GardenAreaSwitcher
-          areas={gardenAreas}
-          placements={placements}
-          bouquetsById={bouquetsById}
-          onOpenBouquet={setQuickViewId}
-          focusAreaId={focusAreaId}
-          onFocusHandled={() => setFocusAreaId(null)}
-        />
-      )}
+      <GardenAreaSwitcher
+        areas={gardenAreas}
+        placements={placements}
+        bouquetsById={bouquetsById}
+        onOpenBouquet={setQuickViewId}
+        focusAreaId={focusAreaId}
+        onFocusHandled={() => setFocusAreaId(null)}
+        showEmptyOverlay={totalCount === 0}
+      />
 
       <BouquetQuickView
         bouquet={quickViewBouquet}

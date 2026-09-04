@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { GardenCanvas } from "./GardenCanvas";
 import { LockedGardenArea } from "./LockedGardenArea";
 import { GardenUnlockGate } from "./GardenUnlockGate";
+import { EmptyGardenState } from "./EmptyGardenState";
 import { buildDisplayAreas } from "../lib/gardenLock";
 import { useOpenedAreaIds } from "../lib/openedAreasFlag";
 import type { BouquetWithFlowers, GardenArea, GardenPlacement } from "../types";
@@ -14,6 +15,14 @@ interface GardenAreaSwitcherProps {
   /** When set, smooth-scrolls to this area's page once (e.g. after tapping "Đến khu vườn" on the unlock celebration). */
   focusAreaId?: string | null;
   onFocusHandled?: () => void;
+  /**
+   * True when the account has no bouquets saved yet. Rather than hiding the
+   * illustrated garden entirely, the "add your first bouquet" card floats
+   * on top of the first (always-unlocked) garden so its backdrop — and the
+   * ambient sway/sparkle animation on it — is visible from the very first
+   * screen a new person sees, not only after they've placed a bouquet.
+   */
+  showEmptyOverlay?: boolean;
 }
 
 export function GardenAreaSwitcher({
@@ -23,6 +32,7 @@ export function GardenAreaSwitcher({
   onOpenBouquet,
   focusAreaId,
   onFocusHandled,
+  showEmptyOverlay = false,
 }: GardenAreaSwitcherProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -83,13 +93,25 @@ export function GardenAreaSwitcher({
                 onUnlocked={() => {}}
               />
             ) : (
-              <GardenCanvas
-                placements={placements.filter((p) => p.gardenAreaId === area.id)}
-                bouquetsById={bouquetsById}
-                theme={area.theme}
-                ambientAnimation={area.order === 0}
-                onOpenBouquet={onOpenBouquet}
-              />
+              <div className="relative">
+                <GardenCanvas
+                  placements={placements.filter((p) => p.gardenAreaId === area.id)}
+                  bouquetsById={bouquetsById}
+                  theme={area.theme}
+                  ambientAnimation={area.order === 0}
+                  onOpenBouquet={onOpenBouquet}
+                />
+                {/* Only the first garden is guaranteed to exist (and be unlocked)
+                    before any bouquet has ever been placed, so the overlay only
+                    ever needs to attach to area.order === 0. */}
+                {showEmptyOverlay && area.order === 0 && (
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
+                    <div className="pointer-events-auto w-full max-w-[280px]">
+                      <EmptyGardenState />
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         ))}

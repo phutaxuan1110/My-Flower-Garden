@@ -6,7 +6,7 @@ export function EmptyGardenState() {
   const { open } = useAddFlow();
   const { t } = useLanguage();
   return (
-    <div className="mx-5 mt-8 flex flex-col items-center rounded-[32px] border border-dashed border-[var(--color-primary-strong)] bg-white/60 px-6 py-12 text-center">
+    <div className="flex w-full flex-col items-center rounded-[32px] border border-dashed border-[var(--color-primary-strong)] bg-white/85 px-6 py-10 text-center shadow-lg shadow-black/5 backdrop-blur-sm">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-blush)] text-[var(--color-rose)]">
         <Sprout size={28} strokeWidth={1.5} />
       </div>
