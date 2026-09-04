@@ -68,6 +68,17 @@ create table if not exists garden_placements (
 );
 create index if not exists garden_placements_area_idx on garden_placements (garden_area_id);
 
+-- One unguessable public link per owner. Deleting this row immediately
+-- revokes the link; enabling sharing again creates a brand-new token.
+create table if not exists garden_shares (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null unique references auth.users (id) on delete cascade,
+  token uuid not null unique default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists garden_shares_token_idx on garden_shares (token);
+
 -- ---------------------------------------------------------------------
 -- 2. Row Level Security — every user can only ever see their own rows
 -- ---------------------------------------------------------------------
@@ -77,6 +88,7 @@ alter table bouquets enable row level security;
 alter table bouquet_flowers enable row level security;
 alter table garden_areas enable row level security;
 alter table garden_placements enable row level security;
+alter table garden_shares enable row level security;
 
 drop policy if exists "profiles: owner full access" on profiles;
 create policy "profiles: owner full access" on profiles
@@ -107,6 +119,10 @@ create policy "garden_placements: owner full access" on garden_placements
   with check (
     exists (select 1 from garden_areas a where a.id = garden_placements.garden_area_id and a.user_id = auth.uid())
   );
+
+drop policy if exists "garden_shares: owner full access" on garden_shares;
+create policy "garden_shares: owner full access" on garden_shares
+  for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- ---------------------------------------------------------------------
 -- 3. Auto-create a profile row whenever someone signs up

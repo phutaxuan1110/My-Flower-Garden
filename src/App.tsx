@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { AuthProvider, useAuth } from "./store/AuthProvider";
 import { GardenProvider, useGarden } from "./store/GardenProvider";
@@ -17,6 +17,7 @@ import { CollectionPage } from "./pages/CollectionPage";
 import { FavoritesPage } from "./pages/FavoritesPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { BouquetDetailPage } from "./pages/BouquetDetailPage";
+import { SharedGardenPage } from "./pages/SharedGardenPage";
 import { getOnboardingSeen, subscribeOnboardingSeen } from "./lib/onboardingFlag";
 
 function AddBouquetHost() {
@@ -56,7 +57,20 @@ function AuthenticatedApp() {
  */
 function RootGate() {
   const { session, loading } = useAuth();
+  const { pathname } = useLocation();
   const onboardingSeen = useSyncExternalStore(subscribeOnboardingSeen, getOnboardingSeen);
+
+  // Public share links must remain accessible without onboarding or an account.
+  if (pathname.startsWith("/share/")) {
+    return (
+      <Routes>
+        <Route path="/share/:shareToken" element={<SharedGardenPage />} />
+        <Route path="/share/:shareToken/collection" element={<SharedGardenPage />} />
+        <Route path="/share/:shareToken/bouquet/:bouquetId" element={<SharedGardenPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
+  }
 
   if (loading) return <LoadingScreen />;
 

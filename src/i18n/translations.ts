@@ -94,6 +94,31 @@ const dict = {
     en: "Couldn't reset your data. Please try again.",
   },
 
+  // Public garden sharing
+  "share.settingsTitle": { vi: "Chia sẻ khu vườn", en: "Share your garden" },
+  "share.settingsBody": {
+    vi: "Bất kỳ ai có link đều có thể xem khu vườn, bộ sưu tập và thông tin về hoa. Tên cá nhân, email, người tặng và ghi chú riêng tư sẽ không được chia sẻ.",
+    en: "Anyone with the link can view the garden, collection, and flower information. Your name, email, giver, and personal notes stay private.",
+  },
+  "share.createLink": { vi: "Tạo link chia sẻ", en: "Create share link" },
+  "share.publicLink": { vi: "Link khu vườn công khai", en: "Public garden link" },
+  "share.copyLink": { vi: "Sao chép", en: "Copy" },
+  "share.shareNow": { vi: "Chia sẻ", en: "Share" },
+  "share.disableLink": { vi: "Tắt và thu hồi link", en: "Disable and revoke link" },
+  "share.linkCreated": { vi: "Đã tạo link chia sẻ", en: "Share link created" },
+  "share.linkCopied": { vi: "Đã sao chép link", en: "Link copied" },
+  "share.linkDisabled": { vi: "Đã thu hồi link chia sẻ", en: "Share link revoked" },
+  "share.error": { vi: "Không thể cập nhật link. Vui lòng thử lại.", en: "Couldn't update the link. Please try again." },
+  "share.readOnly": { vi: "Chế độ chỉ xem", en: "View only" },
+  "share.growingIn": { vi: "Đang được đặt tại", en: "Growing in" },
+  "share.emptyGarden": { vi: "Khu vườn này chưa có khu vực nào.", en: "This garden has no areas yet." },
+  "share.emptyCollection": { vi: "Bộ sưu tập này chưa có bó hoa nào.", en: "This collection has no bouquets yet." },
+  "share.notFoundTitle": { vi: "Không tìm thấy khu vườn", en: "Garden not found" },
+  "share.notFoundBody": {
+    vi: "Link có thể không đúng hoặc chủ khu vườn đã ngừng chia sẻ.",
+    en: "The link may be incorrect or the garden owner has stopped sharing.",
+  },
+
   // Auth (login/sign up)
   "auth.title": { vi: "Chào mừng trở lại", en: "Welcome back" },
   "auth.subtitle": {

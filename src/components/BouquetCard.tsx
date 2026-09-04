@@ -7,7 +7,7 @@ import type { BouquetWithFlowers } from "../types";
 interface BouquetCardProps {
   bouquet: BouquetWithFlowers;
   onOpen: () => void;
-  onToggleFavorite: () => void;
+  onToggleFavorite?: () => void;
 }
 
 export function BouquetCard({ bouquet, onOpen, onToggleFavorite }: BouquetCardProps) {
@@ -45,15 +45,17 @@ export function BouquetCard({ bouquet, onOpen, onToggleFavorite }: BouquetCardPr
           </p>
         </div>
       </button>
-      <button
-        type="button"
-        onClick={onToggleFavorite}
-        aria-pressed={bouquet.isFavorite}
-        aria-label={bouquet.isFavorite ? t("bouquet.removeFromFavorites") : t("bouquet.addToFavorites")}
-        className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[var(--color-rose)] shadow-sm transition-transform active:scale-90"
-      >
-        <Heart size={16} strokeWidth={1.75} fill={bouquet.isFavorite ? "currentColor" : "none"} />
-      </button>
+      {onToggleFavorite && (
+        <button
+          type="button"
+          onClick={onToggleFavorite}
+          aria-pressed={bouquet.isFavorite}
+          aria-label={bouquet.isFavorite ? t("bouquet.removeFromFavorites") : t("bouquet.addToFavorites")}
+          className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[var(--color-rose)] shadow-sm transition-transform active:scale-90"
+        >
+          <Heart size={16} strokeWidth={1.75} fill={bouquet.isFavorite ? "currentColor" : "none"} />
+        </button>
+      )}
     </div>
   );
 }
