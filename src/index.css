@@ -125,13 +125,12 @@
   }
 
   .app-content-padding {
-    /* Extra buffer above the safe-area inset was 12px, which reads as too
-       much empty space under the status bar once the notch itself is
-       already cleared. Trimmed to 4px — still additive on top of
-       env(safe-area-inset-top) (never less than the safe area itself, so
-       it can't creep back up under the status bar/Dynamic Island), just a
-       smaller gap above that. */
-    padding-top: calc(env(safe-area-inset-top) + 4px);
+    /* Reduced the extra buffer above the safe area to 0 — the floor for
+       "closer but guaranteed no overlap". `env(safe-area-inset-top)` is
+       iOS's own reported boundary of the Dynamic Island/notch, so content
+       starting exactly there already clears it; there is no safe way to
+       go any tighter than this without risking overlap on some devices. */
+    padding-top: env(safe-area-inset-top);
     padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 16px);
   }
 
