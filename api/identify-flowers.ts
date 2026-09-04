@@ -88,34 +88,57 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const geminiRes = await fetch(GEMINI_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: buildPrompt(lang) },
-              { inline_data: { mime_type: image.mimeType, data: image.base64 } },
-            ],
-          },
-        ],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: RESPONSE_SCHEMA,
-          // Flower ID from a photo doesn't need deep reasoning — keep thinking
-          // minimal so the response comes back in a few seconds, not ~1 minute.
-          thinkingConfig: { thinkingLevel: "low" },
+    const requestBody = JSON.stringify({
+      contents: [
+        {
+          parts: [
+            { text: buildPrompt(lang) },
+            { inline_data: { mime_type: image.mimeType, data: image.base64 } },
+          ],
         },
-      }),
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: RESPONSE_SCHEMA,
+        // Flower ID from a photo doesn't need deep reasoning — keep thinking
+        // minimal so the response comes back in a few seconds, not ~1 minute.
+        thinkingConfig: { thinkingLevel: "low" },
+      },
     });
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text().catch(() => "");
-      console.error("Gemini API error", geminiRes.status, errText);
+    // Gemini occasionally returns 503 (model overloaded) or 429 (rate limited)
+    // under normal load — these are transient, so retry a couple of times
+    // with a short backoff before giving up.
+    let geminiRes: Response | null = null;
+    let lastErrText = "";
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const res = await fetch(GEMINI_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body: requestBody,
+      });
+      if (res.ok) {
+        geminiRes = res;
+        break;
+      }
+      lastErrText = await res.text().catch(() => "");
+      const retryable = res.status === 503 || res.status === 429;
+      console.error(`Gemini API error ${res.status} (attempt ${attempt}/${maxAttempts})`, lastErrText);
+      if (!retryable || attempt === maxAttempts) {
+        geminiRes = res;
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+    }
+
+    if (!geminiRes || !geminiRes.ok) {
       res.status(502).json({
         status: "error",
-        message: lang === "vi" ? "Không thể kết nối dịch vụ nhận diện hoa." : "Couldn't reach the flower recognition service.",
+        message:
+          lang === "vi"
+            ? "Dịch vụ nhận diện hoa đang quá tải. Vui lòng thử lại sau ít phút."
+            : "The flower recognition service is busy right now. Please try again in a moment.",
       });
       return;
     }

@@ -312,7 +312,7 @@ export class RealFlowerAIService implements FlowerAIService {
     imageDataUrl: string,
     opts?: { timeoutMs?: number; language?: Language }
   ): Promise<AIRecognitionOutcome> {
-    const timeoutMs = opts?.timeoutMs ?? 45000;
+    const timeoutMs = opts?.timeoutMs ?? 90000;
     const language = opts?.language ?? "vi";
     const genericError =
       language === "vi"
