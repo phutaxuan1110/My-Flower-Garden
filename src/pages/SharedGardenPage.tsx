@@ -5,6 +5,7 @@ import { BouquetCard } from "../components/BouquetCard";
 import { GardenCanvas } from "../components/GardenCanvas";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { parseLocalDateString } from "../lib/date";
+import { themeForAreaOrder } from "../lib/gardenLayout";
 import { fetchSharedGarden } from "../lib/shareService";
 import type { SharedGardenData } from "../lib/shareService";
 import type { BouquetWithFlowers, Occasion } from "../types";
@@ -131,6 +132,28 @@ export function SharedGardenPage() {
     () => new Set((data?.bouquets ?? []).flatMap((bouquet) => bouquet.flowers.map((flower) => flower.commonName.toLowerCase()))).size,
     [data]
   );
+  const ambientAreaIds = useMemo(() => {
+    const areas = data?.areas ?? [];
+    const areaIdsWithPlacements = new Set(placements.map((placement) => placement.gardenAreaId));
+    const selectedByTheme = new Map<string, string>();
+
+    // Prefer the first area of each visual theme that contains real bouquet
+    // placements. This keeps stale/duplicate empty rows in shared data from
+    // consuming the one ambient-animation slot for that theme.
+    for (const area of areas) {
+      const theme = themeForAreaOrder(area.order);
+      if (!areaIdsWithPlacements.has(area.id) || selectedByTheme.has(theme)) continue;
+      selectedByTheme.set(theme, area.id);
+    }
+
+    // A newly created first area can still animate before its first bouquet.
+    for (const area of areas) {
+      const theme = themeForAreaOrder(area.order);
+      if (!selectedByTheme.has(theme)) selectedByTheme.set(theme, area.id);
+    }
+
+    return new Set(selectedByTheme.values());
+  }, [data, placements]);
 
   if (!data && !error) {
     return <div className="full-bleed-height fixed inset-0 animate-pulse bg-[var(--color-bg)]" />;
@@ -186,8 +209,8 @@ export function SharedGardenPage() {
                       <GardenCanvas
                         placements={placements.filter((placement) => placement.gardenAreaId === area.id)}
                         bouquetsById={bouquetsById}
-                        theme={area.theme}
-                        ambientAnimation={area.order === 0}
+                        theme={themeForAreaOrder(area.order)}
+                        ambientAnimation={ambientAreaIds.has(area.id)}
                         onOpenBouquet={openBouquet}
                       />
                     </section>
