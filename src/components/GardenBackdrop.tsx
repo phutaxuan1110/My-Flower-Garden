@@ -1,4 +1,11 @@
 import gardenImage from "../assets/garden/my-flower-garden-empty.png";
+// Only the very first garden (order 0) gets the ambient sprite treatment.
+// Its tree/potted bush/flower-stem cluster/leaf cluster have been painted
+// out of this variant by hand, leaving clean grass/sky behind — GardenAmbientLayer
+// then places real cropped sprites of those same objects back on top at
+// their original position so they can sway. Every other "garden"-themed area
+// (order 2, 4, ...) still uses the plain, fully static `gardenImage` above.
+import gardenImageClean from "../assets/garden/my-flower-garden-empty-clean.png";
 import riverImage from "../assets/garden/my-flower-garden-river.png";
 import type { GardenTheme } from "../lib/gardenLayout";
 import { GardenAmbientLayer } from "./GardenAmbientLayer";
@@ -16,7 +23,8 @@ export function GardenBackdrop({
   theme?: GardenTheme | string;
   ambientAnimation?: boolean;
 }) {
-  const src = theme === "river" ? riverImage : gardenImage;
+  const showAmbient = theme === "garden" && ambientAnimation;
+  const src = theme === "river" ? riverImage : showAmbient ? gardenImageClean : gardenImage;
   return (
     <>
       <img
@@ -27,7 +35,7 @@ export function GardenBackdrop({
         draggable={false}
         onContextMenu={(e) => e.preventDefault()}
       />
-      {theme === "garden" && ambientAnimation && <GardenAmbientLayer />}
+      {showAmbient && <GardenAmbientLayer />}
     </>
   );
 }

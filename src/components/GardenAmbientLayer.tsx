@@ -1,11 +1,69 @@
 import { useEffect, useRef, useState } from "react";
+import treeSprite from "../assets/garden/ambient/tree.png";
+import pottedBushSprite from "../assets/garden/ambient/potted-bush.png";
+import flowerStemsSprite from "../assets/garden/ambient/flower-stems.png";
+import leafClusterSprite from "../assets/garden/ambient/leaf-cluster.png";
+import sparkleA from "../assets/garden/ambient/sparkle-a.png";
+import sparkleB from "../assets/garden/ambient/sparkle-b.png";
+import sparkleC from "../assets/garden/ambient/sparkle-c.png";
 
 /**
- * A deliberately sparse, CSS-driven atmosphere layer for the first garden.
- * The source illustration remains completely static; this SVG only adds a
- * few matching edge plants, sparkles and wind traces above it. Intersection
- * Observer pauses every animation when its garden is off-screen.
+ * The first garden's illustration (my-flower-garden-empty-clean.png) has had
+ * its tree, potted bush, flower-stem cluster and leaf cluster painted out by
+ * hand, leaving clean grass/sky behind. This layer places real cropped
+ * sprites of those exact same objects back on top, at the exact pixel
+ * position they used to occupy (see the `OBJECTS` table below), so what the
+ * person sees at rest is pixel-identical to the original artwork — the only
+ * difference is these copies can now sway.
+ *
+ * All coordinates are in the original artwork's pixel space (572x1024) and
+ * converted to percentages here, so this still lines up correctly no matter
+ * how the backdrop is scaled.
  */
+const ART_W = 572;
+const ART_H = 1024;
+
+function pct(px: number, total: number) {
+  return `${(px / total) * 100}%`;
+}
+
+interface SpriteSpec {
+  src: string;
+  className: string;
+  /** Original top-left position + size in the 572x1024 artwork. */
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** transform-origin, as a CSS value, in the sprite's own local box. */
+  origin: string;
+}
+
+const OBJECTS: SpriteSpec[] = [
+  { src: treeSprite, className: "garden-ambient__object garden-ambient__tree", x: 26, y: 89, w: 129, h: 140, origin: "50% 96%" },
+  { src: flowerStemsSprite, className: "garden-ambient__object garden-ambient__flowers", x: 0, y: 232, w: 73, h: 124, origin: "45% 92%" },
+  { src: leafClusterSprite, className: "garden-ambient__object garden-ambient__leaves", x: 1, y: 622, w: 51, h: 76, origin: "35% 100%" },
+  { src: pottedBushSprite, className: "garden-ambient__object garden-ambient__pot", x: 494, y: 597, w: 78, h: 89, origin: "50% 100%" },
+];
+
+interface SparkleSpec {
+  src: string;
+  className: string;
+  x: number;
+  y: number;
+  w: number;
+}
+
+// New decorative twinkles — nothing at these spots matched the sparkle
+// assets against the original artwork, so they aren't replacing anything;
+// they're simply scattered into empty sky/grass gaps, clear of the bouquet
+// placement slots and the objects above.
+const SPARKLES: SparkleSpec[] = [
+  { src: sparkleA, className: "garden-ambient__sparkle garden-ambient__sparkle--1", x: 250, y: 40, w: 22 },
+  { src: sparkleB, className: "garden-ambient__sparkle garden-ambient__sparkle--2", x: 470, y: 260, w: 26 },
+  { src: sparkleC, className: "garden-ambient__sparkle garden-ambient__sparkle--3", x: 170, y: 470, w: 14 },
+];
+
 export function GardenAmbientLayer() {
   const rootRef = useRef<HTMLDivElement>(null);
   const isIntersectingRef = useRef(false);
@@ -39,48 +97,48 @@ export function GardenAmbientLayer() {
       data-active={isActive ? "true" : "false"}
       aria-hidden="true"
     >
+      {OBJECTS.map((o) => (
+        <img
+          key={o.className}
+          src={o.src}
+          alt=""
+          draggable={false}
+          className={o.className}
+          style={{
+            position: "absolute",
+            left: pct(o.x, ART_W),
+            top: pct(o.y, ART_H),
+            width: pct(o.w, ART_W),
+            height: pct(o.h, ART_H),
+            transformOrigin: o.origin,
+          }}
+        />
+      ))}
+      {SPARKLES.map((s) => (
+        <img
+          key={s.className}
+          src={s.src}
+          alt=""
+          draggable={false}
+          className={s.className}
+          style={{
+            position: "absolute",
+            left: pct(s.x, ART_W),
+            top: pct(s.y, ART_H),
+            width: pct(s.w, ART_W),
+            height: "auto",
+          }}
+        />
+      ))}
+
+      {/* Faint moving wind traces — new decorative additions, not extracted
+          from the artwork, same as the sparkles above. */}
       <svg
-        viewBox="0 0 572 1024"
+        viewBox={`0 0 ${ART_W} ${ART_H}`}
         preserveAspectRatio="xMidYMid meet"
-        className="absolute inset-0 h-full w-full"
+        className="pointer-events-none absolute inset-0 h-full w-full"
         focusable="false"
       >
-        <g className="garden-ambient__plants" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <g transform="translate(22 706)">
-            <g className="garden-ambient__plant garden-ambient__plant--1">
-              <path d="M8 53 C7 35 8 17 13 1 M10 31 C2 27 0 20 1 15 M11 22 C20 19 23 12 22 6" />
-              <path d="M14 52 C17 38 24 27 34 20 M23 35 C31 36 36 31 38 26" />
-            </g>
-          </g>
-          <g transform="translate(500 681)">
-            <g className="garden-ambient__plant garden-ambient__plant--2">
-              <path d="M21 61 C21 42 17 20 9 2 M18 39 C8 36 4 28 4 20 M19 30 C29 25 31 17 29 10" />
-              <path d="M23 60 C28 43 35 32 44 23 M32 40 C42 41 47 35 49 29" />
-            </g>
-          </g>
-          <g transform="translate(37 866)">
-            <g className="garden-ambient__plant garden-ambient__plant--3">
-              <path d="M15 63 C14 43 17 24 25 5 M18 42 C8 39 3 31 4 22 M20 31 C30 29 36 20 36 12" />
-              <path d="M13 62 C9 47 4 38 0 32" />
-            </g>
-          </g>
-          <g transform="translate(515 855)">
-            <g className="garden-ambient__plant garden-ambient__plant--4">
-              <path d="M18 67 C19 46 16 24 9 4 M17 45 C7 40 3 32 4 23 M17 34 C27 30 32 21 31 13" />
-              <path d="M21 66 C26 49 34 39 43 32" />
-            </g>
-          </g>
-        </g>
-
-        <g className="garden-ambient__sparkles" fill="currentColor">
-          <circle className="garden-ambient__sparkle garden-ambient__sparkle--1" cx="66" cy="56" r="3.1" />
-          <path className="garden-ambient__sparkle garden-ambient__sparkle--2" d="M166 155 v22 M155 166 h22" />
-          <circle className="garden-ambient__sparkle garden-ambient__sparkle--3" cx="474" cy="118" r="3.6" />
-          <circle className="garden-ambient__sparkle garden-ambient__sparkle--4" cx="510" cy="190" r="2.5" />
-          <path className="garden-ambient__sparkle garden-ambient__sparkle--5" d="M132 234 v16 M124 242 h16" />
-          <circle className="garden-ambient__sparkle garden-ambient__sparkle--6" cx="446" cy="302" r="2.4" />
-        </g>
-
         <g className="garden-ambient__wind" fill="none" strokeLinecap="round">
           <path className="garden-ambient__wind-line garden-ambient__wind-line--1" d="M86 208 C136 194 187 214 238 202" />
           <path className="garden-ambient__wind-line garden-ambient__wind-line--2" d="M348 340 C390 328 436 344 486 332" />
