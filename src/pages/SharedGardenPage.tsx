@@ -176,12 +176,15 @@ export function SharedGardenPage() {
 
   return (
     <div className="full-bleed-height fixed inset-0 w-full overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)] md:flex md:items-center md:justify-center md:py-10">
-      <main className="paper-grain relative mx-auto h-full w-full max-w-[480px] overflow-y-auto bg-[var(--color-bg)] md:h-[880px] md:rounded-[36px] md:shadow-2xl">
+      <main className="paper-grain relative mx-auto flex h-full w-full max-w-[480px] flex-col overflow-hidden bg-[var(--color-bg)] md:h-[880px] md:rounded-[36px] md:shadow-2xl">
         {detailBouquet ? (
-          <SharedBouquetDetail bouquet={detailBouquet} data={data} onBack={() => navigate(-1)} />
+          <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
+            <SharedBouquetDetail bouquet={detailBouquet} data={data} onBack={() => navigate(-1)} />
+          </div>
         ) : (
-          <div className="pb-[104px]">
-            <header className="px-5 pt-6" style={{ paddingTop: "max(env(safe-area-inset-top), 24px)" }}>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
+              <header className="px-5 pt-6" style={{ paddingTop: "max(env(safe-area-inset-top), 24px)" }}>
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="flex items-center gap-1.5 text-xs font-medium text-[var(--color-muted)]">
@@ -193,7 +196,7 @@ export function SharedGardenPage() {
               </div>
             </header>
 
-            {!isCollection ? (
+              {!isCollection ? (
               <>
                 <div className="mx-5 mt-4 flex items-center gap-4 rounded-[24px] border border-[var(--color-line)] bg-white/70 px-4 py-3">
                   <span className="font-display text-lg text-[var(--color-ink)]">{data.bouquets.length}</span>
@@ -220,7 +223,7 @@ export function SharedGardenPage() {
                   <p className="mt-12 px-8 text-center text-sm text-[var(--color-muted)]">{t("share.emptyGarden")}</p>
                 )}
               </>
-            ) : (
+              ) : (
               <section className="px-5 pt-5">
                 <h2 className="font-display text-2xl text-[var(--color-ink)]">{t("collection.title")}</h2>
                 <div className="mt-4 grid grid-cols-2 gap-3">
@@ -232,9 +235,10 @@ export function SharedGardenPage() {
                   <p className="mt-12 text-center text-sm text-[var(--color-muted)]">{t("share.emptyCollection")}</p>
                 )}
               </section>
-            )}
+              )}
+            </div>
 
-            <nav className="fixed bottom-0 left-1/2 z-20 flex w-full max-w-[480px] -translate-x-1/2 gap-2 border-t border-[var(--color-line)] bg-white/95 px-5 pt-3 shadow-[0_-8px_24px_rgba(74,53,64,0.08)] backdrop-blur-md safe-bottom md:absolute">
+            <nav className="safe-bottom relative z-20 flex w-full shrink-0 gap-2 border-t border-[var(--color-line)] bg-white/95 px-5 pt-3 shadow-[0_-8px_24px_rgba(74,53,64,0.08)] backdrop-blur-md">
               <button
                 type="button"
                 onClick={() => navigate(`/share/${shareToken}`)}

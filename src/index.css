@@ -121,23 +121,10 @@
     padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 
-  /* The mobile nav is portaled directly under <body>, outside every app
-     shell that clips scrolling content. The overscan layer paints beyond
-     the CSS layout viewport so iOS standalone mode cannot expose the page
-     background below the nav while resolving its home-indicator safe area. */
+  /* BottomNavigation is a non-scrolling flex item below the content pane.
+     Isolation keeps its backdrop and shadow in their own stacking context. */
   .bottom-navigation {
-    bottom: 0 !important;
     isolation: isolate;
-  }
-  .bottom-navigation::after {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    top: 100%;
-    right: 0;
-    left: 0;
-    height: calc(128px + env(safe-area-inset-bottom));
-    background: rgba(255, 255, 255, 0.9);
   }
   .safe-top {
     padding-top: calc(env(safe-area-inset-top) + 12px);
@@ -150,7 +137,10 @@
        starting exactly there already clears it; there is no safe way to
        go any tighter than this without risking overlap on some devices. */
     padding-top: env(safe-area-inset-top);
-    padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 16px);
+    /* The nav now occupies its own flex row, so content only needs a small
+       breathing space; reserving the nav height here would create a blank
+       strip above it. */
+    padding-bottom: 16px;
   }
 
   /* Dynamic-viewport-safe full-bleed heights for full-screen sheets. Written

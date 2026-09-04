@@ -1,5 +1,4 @@
 import React from "react";
-import { createPortal } from "react-dom";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { BottomNavigation } from "./BottomNavigation";
 import { useGardenEditMode } from "../hooks/useGardenEditMode";
@@ -42,37 +41,12 @@ import { useChromeVisibility } from "../hooks/useChromeVisibility";
  * render behind it. Because `useSearchParams` reflects the URL on the very
  * first render (no effect needed), this is correct from the first paint —
  * there is nothing to flash.
- * On iOS standalone mode, a fixed descendant can still be clipped at the
- * shell's layout-viewport boundary while the physical safe-area region is
- * painted below it. The mobile nav is therefore portaled directly to body,
- * outside both overflow-clipping shell layers. Its CSS also paints an
- * overscan strip below the nav, so the home-indicator region remains covered
- * even while WebKit is reconciling the layout and visual viewports. Desktop
- * keeps the nav inside the centered app frame.
- *
- * Root cause of "the bottom nav covers quick-view / add-bouquet content
- * that should be above it" (z-[60]/z-50 overlays visually losing to the
- * nav's z-40): portaling the mobile nav to `document.body` above fixed the
- * clipping bug, but it also moved the nav *outside* this shell's own DOM
- * subtree. This shell's outer wrapper is itself `position: fixed`, which
- * unconditionally opens its own stacking context — every z-index used
- * anywhere inside the app (the quick-view sheet's z-[60], the add-bouquet
- * sheet's z-50, popups at z-[70]/z-[80]) is only ever compared *within*
- * that trapped context. The portaled nav sits one level up, a sibling of
- * that entire wrapper at the document body level, with its own explicit
- * z-40 — so it now beats the *whole app*, regardless of what z-index any
- * modal inside the app claims, because that modal's z-index never gets to
- * compete at the body level at all.
- *
- * No z-index arrangement can fix that from inside the trapped context, so
- * the fix doesn't try to win a stacking fight — it removes the nav from the
- * DOM entirely whenever something needs the full screen. `hideChrome` below
- * now also reads `isChromeHidden` from ChromeVisibilityProvider, a shared
- * registry that BouquetQuickView, AddBouquetSheet, GardenUnlockCelebration,
- * and ConfirmationDialog each register themselves into while open — so
- * every current (and future) full-screen or bottom-anchored overlay is
- * guaranteed never to have the nav painted over any part of it, independent
- * of any z-index value.
+ * The nav is a non-scrolling flex item inside the same definite-height app
+ * frame as the content. Only the content pane scrolls. This avoids mixing a
+ * fixed element's visual-viewport coordinates with the shell's dynamic
+ * layout viewport, which could leave the nav floating above the real bottom
+ * on iOS and in tall responsive previews. `hideChrome` still removes it when
+ * a full-screen overlay or Garden Edit Mode is active.
  */
 export function MobileAppShell({ children }: { children: React.ReactNode }) {
   const { isActive: isGardenEditActive } = useGardenEditMode();
@@ -86,22 +60,11 @@ export function MobileAppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="full-bleed-height fixed inset-0 w-full overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)] md:static md:inset-auto md:h-auto md:min-h-dvh md:w-auto md:overflow-visible md:flex md:items-center md:justify-center md:py-10">
       <div className="paper-grain relative mx-auto flex h-full w-full max-w-[480px] flex-col bg-[var(--color-bg)] md:h-auto md:min-h-[880px] md:rounded-[36px] md:shadow-2xl md:shadow-[var(--color-rose)]/15 md:ring-1 md:ring-[var(--color-line)]">
-        <div className={`no-scrollbar flex-1 overflow-y-auto ${hideChrome ? "" : "app-content-padding"}`}>
+        <div className={`no-scrollbar min-h-0 flex-1 overflow-y-auto ${hideChrome ? "" : "app-content-padding"}`}>
           {children}
         </div>
-        {!hideChrome && (
-          <div className="hidden md:block">
-            <BottomNavigation />
-          </div>
-        )}
+        {!hideChrome && <BottomNavigation />}
       </div>
-      {!hideChrome &&
-        createPortal(
-          <div className="md:hidden">
-            <BottomNavigation />
-          </div>,
-          document.body
-        )}
     </div>
   );
 }
