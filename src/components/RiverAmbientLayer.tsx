@@ -41,8 +41,12 @@ interface SpriteSpec {
 // grounded lavender) so they pivot naturally instead of rotating around
 // their own bounding-box center.
 const SWAYING: SpriteSpec[] = [
-  { src: wisteriaLeft, className: "river-ambient__object river-ambient__wisteria river-ambient__wisteria--left", x: 0, y: 0, w: 299, h: 242, origin: "15% 0%" },
-  { src: wisteriaRight, className: "river-ambient__object river-ambient__wisteria river-ambient__wisteria--right", x: 653, y: 0, w: 281, h: 317, origin: "85% 0%" },
+  // The source filenames describe the direction the branch grows from, not
+  // the corner it should occupy: `right` attaches to the artwork's left edge
+  // and `left` attaches to its right edge. Keep each sprite at its native
+  // dimensions so swapping them does not stretch the painted linework.
+  { src: wisteriaRight, className: "river-ambient__object river-ambient__wisteria river-ambient__wisteria--left", x: 0, y: 0, w: 281, h: 317, origin: "15% 0%" },
+  { src: wisteriaLeft, className: "river-ambient__object river-ambient__wisteria river-ambient__wisteria--right", x: 635, y: 0, w: 299, h: 242, origin: "85% 0%" },
   { src: lavender, className: "river-ambient__object river-ambient__lavender", x: 0, y: 1440, w: 108, h: 218, origin: "40% 100%" },
 ];
 
