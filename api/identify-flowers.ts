@@ -103,6 +103,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: RESPONSE_SCHEMA,
+          // Flower ID from a photo doesn't need deep reasoning — keep thinking
+          // minimal so the response comes back in a few seconds, not ~1 minute.
+          thinkingConfig: { thinkingLevel: "low" },
         },
       }),
     });
