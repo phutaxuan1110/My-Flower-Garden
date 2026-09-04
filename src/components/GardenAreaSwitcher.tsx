@@ -31,7 +31,7 @@ export function GardenAreaSwitcher({ areas, placements, bouquetsById, onOpenBouq
         className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto px-5"
       >
         {displayAreas.map((area) => (
-          <div key={area.id} className="w-full shrink-0 snap-center pr-0">
+          <div key={area.id} className="w-full shrink-0 snap-center px-2 first:pl-0 last:pr-0">
             {area.isLocked ? (
               <LockedGardenArea />
             ) : (

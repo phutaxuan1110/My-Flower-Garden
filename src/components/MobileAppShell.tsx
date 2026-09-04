@@ -40,6 +40,19 @@ import { useGardenEditMode } from "../hooks/useGardenEditMode";
  * render behind it. Because `useSearchParams` reflects the URL on the very
  * first render (no effect needed), this is correct from the first paint —
  * there is nothing to flash.
+ * Root cause of "the bottom nav sits with a visible gap above the real
+ * bottom edge of the screen" (nav renders, but with the page's own
+ * background peeking in beneath it): unlike the splash screen (`App.tsx`),
+ * `OnboardingPage`, and `LoginPage` — which all pin themselves with
+ * `fixed inset-0` in *addition* to `.full-bleed-height` — this shell only
+ * had the height class. `height: 100dvh` is usually accurate, but it's a
+ * measured value that can briefly lag the real visual viewport (e.g. while
+ * Safari's toolbar is mid-animation when the screenshot/paint happens), so
+ * the shell came out a little shorter than the actual screen and the nav
+ * (pinned to *this shell's* bottom edge, not the screen's) sat above the
+ * true bottom. `fixed inset-0` pins the shell directly to the viewport's
+ * edges regardless of any measured height, matching the pattern already
+ * used everywhere else in the app.
  */
 export function MobileAppShell({ children }: { children: React.ReactNode }) {
   const { isActive: isGardenEditActive } = useGardenEditMode();
@@ -50,7 +63,7 @@ export function MobileAppShell({ children }: { children: React.ReactNode }) {
   const hideChrome = isGardenEditActive || isEnteringGardenEdit || isBouquetDetail;
 
   return (
-    <div className="full-bleed-height overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)] md:h-auto md:min-h-dvh md:overflow-visible md:flex md:items-center md:justify-center md:py-10">
+    <div className="full-bleed-height fixed inset-0 w-full overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)] md:static md:inset-auto md:h-auto md:min-h-dvh md:w-auto md:overflow-visible md:flex md:items-center md:justify-center md:py-10">
       <div className="paper-grain relative mx-auto flex h-full w-full max-w-[480px] flex-col bg-[var(--color-bg)] md:h-auto md:min-h-[880px] md:rounded-[36px] md:shadow-2xl md:shadow-[var(--color-rose)]/15 md:ring-1 md:ring-[var(--color-line)]">
         <div className={`no-scrollbar flex-1 overflow-y-auto ${hideChrome ? "" : "app-content-padding"}`}>
           {children}

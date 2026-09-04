@@ -180,6 +180,15 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Blocks iOS Safari's long-press "Share.../Save to Photos/Copy..." image
+     menu (see screenshot bug report) on view-only garden artwork. Combined
+     with `onContextMenu` preventDefault (blocks the desktop right-click
+     menu) and `draggable={false}` (blocks drag-to-save) on the same
+     elements for full coverage across browsers. */
+  .no-callout {
+    -webkit-touch-callout: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

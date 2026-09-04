@@ -34,7 +34,13 @@ export function BouquetFrame({ imageUrl, frameStyle, alt, className = "", rounde
         }`}
         style={clipPath !== "none" ? { clipPath, WebkitClipPath: clipPath } : undefined}
       >
-        <img src={imageUrl} alt={alt} className="no-native-drag h-full w-full object-cover" draggable={false} />
+        <img
+          src={imageUrl}
+          alt={alt}
+          className="no-native-drag no-callout h-full w-full object-cover"
+          draggable={false}
+          onContextMenu={(e) => e.preventDefault()}
+        />
       </div>
 
       {frameStyle === "ribbon-round" && (

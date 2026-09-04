@@ -39,7 +39,7 @@ export interface GardenRepository {
   replaceFlowers(bouquetId: string, flowers: Omit<BouquetFlower, "id" | "bouquetId">[]): Promise<BouquetFlower[]>;
 
   listGardenAreas(): Promise<GardenArea[]>;
-  createGardenArea(name: string, theme: string): Promise<GardenArea>;
+  createGardenArea(name: string, theme: string, order?: number): Promise<GardenArea>;
 
   listPlacements(): Promise<GardenPlacement[]>;
   placeBouquet(args: {
@@ -234,9 +234,9 @@ export class LocalStorageGardenRepository implements GardenRepository {
     return tick(this.ensureDefaultGardenArea());
   }
 
-  async createGardenArea(name: string, theme: string): Promise<GardenArea> {
+  async createGardenArea(name: string, theme: string, order?: number): Promise<GardenArea> {
     const areas = this.ensureDefaultGardenArea();
-    const area: GardenArea = { id: makeId(), userId: DEFAULT_USER_ID, name, order: areas.length, theme };
+    const area: GardenArea = { id: makeId(), userId: DEFAULT_USER_ID, name, order: order ?? areas.length, theme };
     write(KEYS.gardenAreas, [...areas, area]);
     return tick(area, 200);
   }

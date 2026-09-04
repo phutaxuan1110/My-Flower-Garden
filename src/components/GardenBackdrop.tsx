@@ -15,8 +15,9 @@ export function GardenBackdrop({ theme = "garden" }: { theme?: GardenTheme | str
       src={src}
       alt=""
       aria-hidden="true"
-      className="absolute inset-0 h-full w-full select-none object-contain"
+      className="no-callout absolute inset-0 h-full w-full select-none object-contain"
       draggable={false}
+      onContextMenu={(e) => e.preventDefault()}
     />
   );
 }

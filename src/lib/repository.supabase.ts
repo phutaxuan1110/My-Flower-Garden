@@ -176,6 +176,15 @@ function placementFromRow(row: PlacementRow): GardenPlacement {
 }
 
 export class SupabaseGardenRepository implements GardenRepository {
+  // Coalesces concurrent "seed the first default area" attempts within this
+  // session into a single in-flight request. Without this, two near-
+  // simultaneous calls to listGardenAreas() (e.g. React effects that fire
+  // more than once, or two screens loading at once) can each see "0 areas"
+  // from their own SELECT before either's INSERT has committed, and each
+  // independently create a duplicate "Garden Corner" row at order 0 — the
+  // exact bug that produced two identical first gardens.
+  private seedingDefaultArea: Promise<GardenArea> | null = null;
+
   async getProfile(): Promise<UserProfile> {
     const userId = await getUserId();
     const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
@@ -338,21 +347,87 @@ export class SupabaseGardenRepository implements GardenRepository {
     const userId = await getUserId();
     const { data, error } = await supabase.from("garden_areas").select("*").order("order", { ascending: true });
     if (error) throw error;
-    if (data && data.length > 0) return (data as AreaRow[]).map(areaFromRow);
 
-    // First-ever load for this user: seed a default area.
-    return [await this.createGardenArea("Garden Corner", "spring", userId)];
+    if (!data || data.length === 0) {
+      // First-ever load for this user: seed a default area. Coalesced (see
+      // `seedingDefaultArea`) so two callers racing to seed at once share
+      // one insert instead of each creating their own duplicate area.
+      if (!this.seedingDefaultArea) {
+        this.seedingDefaultArea = this.createGardenArea("Garden Corner", "garden", 0, userId).finally(() => {
+          this.seedingDefaultArea = null;
+        });
+      }
+      return [await this.seedingDefaultArea];
+    }
+
+    return this.dedupeAreasByOrder(data as AreaRow[]);
   }
 
-  async createGardenArea(name: string, theme: string, presetUserId?: string): Promise<GardenArea> {
+  /**
+   * Self-heals data that already has more than one area sharing the same
+   * `order` (from the race described above, before the coalescing guard
+   * existed). Keeps exactly one area per order value: the one an existing
+   * placement points to if any duplicate has bouquets in it, otherwise the
+   * first one returned. Every other duplicate is *renumbered* to the next
+   * free order rather than deleted, so no bouquet or placement is ever
+   * lost — it just becomes a legitimate, distinctly-ordered extra area.
+   */
+  private async dedupeAreasByOrder(rows: AreaRow[]): Promise<GardenArea[]> {
+    const byOrder = new Map<number, AreaRow[]>();
+    for (const row of rows) {
+      const group = byOrder.get(row.order) ?? [];
+      group.push(row);
+      byOrder.set(row.order, group);
+    }
+    const hasDuplicates = [...byOrder.values()].some((group) => group.length > 1);
+    if (!hasDuplicates) return rows.map(areaFromRow);
+
+    const { data: placementRows } = await supabase.from("garden_placements").select("garden_area_id");
+    const areaIdsWithPlacements = new Set((placementRows ?? []).map((p: { garden_area_id: string }) => p.garden_area_id));
+
+    let nextFreeOrder = Math.max(...rows.map((r) => r.order)) + 1;
+    const resolved: AreaRow[] = [];
+    for (const [, group] of byOrder) {
+      if (group.length === 1) {
+        resolved.push(group[0]);
+        continue;
+      }
+      const keeperIndex = Math.max(
+        0,
+        group.findIndex((row) => areaIdsWithPlacements.has(row.id))
+      );
+      group.forEach((row, i) => {
+        if (i === keeperIndex) {
+          resolved.push(row);
+          return;
+        }
+        const renumbered = { ...row, order: nextFreeOrder++ };
+        resolved.push(renumbered);
+        void supabase.from("garden_areas").update({ order: renumbered.order }).eq("id", row.id);
+      });
+    }
+    resolved.sort((a, b) => a.order - b.order);
+    return resolved.map(areaFromRow);
+  }
+
+  async createGardenArea(name: string, theme: string, order?: number, presetUserId?: string): Promise<GardenArea> {
     const userId = presetUserId ?? (await getUserId());
-    const { count } = await supabase
-      .from("garden_areas")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId);
+    let resolvedOrder = order;
+    if (resolvedOrder === undefined) {
+      // Only hit when a caller doesn't already know the intended order —
+      // still has the same race window in theory (two concurrent calls can
+      // both COUNT before either INSERTs), but callers in this app always
+      // pass an explicit order now (see GardenProvider), so this fallback
+      // only exists for interface completeness.
+      const { count } = await supabase
+        .from("garden_areas")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId);
+      resolvedOrder = count ?? 0;
+    }
     const { data, error } = await supabase
       .from("garden_areas")
-      .insert({ id: makeId(), user_id: userId, name, order: count ?? 0, theme })
+      .insert({ id: makeId(), user_id: userId, name, order: resolvedOrder, theme })
       .select()
       .single();
     if (error) throw error;

@@ -178,10 +178,11 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
       const freeSlot = SLOTS_PER_AREA.find((s) => !occupiedSlots.has(s.id));
       if (freeSlot) return { area, slotId: freeSlot.id };
     }
-    const nextOrder = areas.length; // areas are 0-indexed by creation order
+    const nextOrder = Math.max(-1, ...areas.map((a) => a.order)) + 1;
     const newArea = await gardenRepository.createGardenArea(
       generateAreaName(nextOrder),
-      themeForAreaOrder(nextOrder)
+      themeForAreaOrder(nextOrder),
+      nextOrder
     );
     setGardenAreas((prev) => [...prev, newArea]);
     return { area: newArea, slotId: SLOTS_PER_AREA[0].id };
@@ -207,7 +208,8 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
       const nextOrder = filledArea.order + 1;
       const newArea = await gardenRepository.createGardenArea(
         generateAreaName(nextOrder),
-        themeForAreaOrder(nextOrder)
+        themeForAreaOrder(nextOrder),
+        nextOrder
       );
       setGardenAreas((prev) => [...prev, newArea]);
       setNewlyUnlockedArea(newArea);
