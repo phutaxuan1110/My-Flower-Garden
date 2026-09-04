@@ -17,8 +17,16 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 const GROQ_MODEL = "qwen/qwen3.6-27b";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-const GEMINI_MODEL = "gemini-flash-latest";
+// Use a pinned, lightweight model instead of the moving `*-latest` alias.
+// The alias can silently change latency/capabilities and was repeatedly
+// overloaded in production.
+const GEMINI_MODEL = "gemini-3.1-flash-lite";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+const MAX_IMAGE_DATA_URL_BYTES = 4_000_000;
+// Keep the complete primary + fallback retry path below the client's 90s timeout.
+const GROQ_TIMEOUT_MS = 18_000;
+const GEMINI_TIMEOUT_MS = 18_000;
 
 const GEMINI_RESPONSE_SCHEMA = {
   type: "OBJECT",
@@ -70,6 +78,56 @@ interface ProviderResult {
   debugInfo?: string;
 }
 
+function extractJson(text: string): unknown {
+  const trimmed = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start < 0 || end <= start) throw new Error("No JSON object in provider response");
+    return JSON.parse(trimmed.slice(start, end + 1));
+  }
+}
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function normalizeResult(value: unknown): unknown {
+  if (!value || typeof value !== "object") return value;
+  const input = value as Record<string, unknown>;
+  if (!Array.isArray(input.flowers)) return value;
+
+  return {
+    flowers: input.flowers.map((flower, index) => {
+      const item = flower && typeof flower === "object" ? (flower as Record<string, unknown>) : {};
+      const rawConfidence = Number(item.confidence);
+      const rawQuantity = Number(item.estimatedQuantity);
+      return {
+        id: typeof item.id === "string" && item.id ? item.id : `ai-flower-${index + 1}`,
+        commonName: String(item.commonName ?? "").trim(),
+        scientificName: item.scientificName ? String(item.scientificName).trim() : undefined,
+        color: item.color ? String(item.color).trim() : undefined,
+        estimatedQuantity:
+          Number.isFinite(rawQuantity) && rawQuantity > 0 ? Math.max(1, Math.round(rawQuantity)) : undefined,
+        confidence: Number.isFinite(rawConfidence) ? Math.min(1, Math.max(0, rawConfidence)) : 0.5,
+        meaning: String(item.meaning ?? "").trim(),
+        symbolism: Array.isArray(item.symbolism)
+          ? item.symbolism.map(String).map((text) => text.trim()).filter(Boolean).slice(0, 3)
+          : undefined,
+      };
+    }),
+    overallMeaning: String(input.overallMeaning ?? "").trim(),
+  };
+}
+
 async function tryGroq(imageDataUrl: string, lang: "vi" | "en"): Promise<ProviderResult> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) return { ok: false, debugInfo: "GROQ_API_KEY not set" };
@@ -94,18 +152,21 @@ async function tryGroq(imageDataUrl: string, lang: "vi" | "en"): Promise<Provide
     ],
     temperature: 0.4,
     max_completion_tokens: 1024,
-    response_format: { type: "json_object" },
   });
 
   const maxAttempts = 2;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     let r: Response;
     try {
-      r = await fetch(GROQ_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: requestBody,
-      });
+      r = await fetchWithTimeout(
+        GROQ_URL,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+          body: requestBody,
+        },
+        GROQ_TIMEOUT_MS
+      );
     } catch (err) {
       console.error(`Groq network error (attempt ${attempt}/${maxAttempts})`, err);
       if (attempt === maxAttempts) return { ok: false, debugInfo: "Groq network error" };
@@ -116,18 +177,18 @@ async function tryGroq(imageDataUrl: string, lang: "vi" | "en"): Promise<Provide
       const text: string | undefined = data?.choices?.[0]?.message?.content;
       if (!text) return { ok: false, debugInfo: "Groq returned empty content" };
       try {
-        return { ok: true, parsed: JSON.parse(text) };
+        return { ok: true, parsed: normalizeResult(extractJson(text)) };
       } catch {
         return { ok: false, debugInfo: "Groq returned invalid JSON" };
       }
     }
     const errText = await r.text().catch(() => "");
     console.error(`Groq API error ${r.status} (attempt ${attempt}/${maxAttempts})`, errText);
-    const retryable = r.status === 503 || r.status === 429;
+    const retryable = r.status === 408 || r.status === 429 || r.status >= 500;
     if (!retryable || attempt === maxAttempts) {
       return { ok: false, debugInfo: `Groq ${r.status}: ${errText.slice(0, 300)}` };
     }
-    await new Promise((resolve) => setTimeout(resolve, attempt * 1200));
+    await new Promise((resolve) => setTimeout(resolve, attempt * 1000 + Math.random() * 400));
   }
   return { ok: false, debugInfo: "Groq exhausted retries" };
 }
@@ -151,7 +212,6 @@ async function tryGemini(imageDataUrl: string, lang: "vi" | "en"): Promise<Provi
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: GEMINI_RESPONSE_SCHEMA,
-      thinkingConfig: { thinkingLevel: "low" },
     },
   });
 
@@ -159,11 +219,15 @@ async function tryGemini(imageDataUrl: string, lang: "vi" | "en"): Promise<Provi
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     let r: Response;
     try {
-      r = await fetch(GEMINI_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        body: requestBody,
-      });
+      r = await fetchWithTimeout(
+        GEMINI_URL,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          body: requestBody,
+        },
+        GEMINI_TIMEOUT_MS
+      );
     } catch (err) {
       console.error(`Gemini network error (attempt ${attempt}/${maxAttempts})`, err);
       if (attempt === maxAttempts) return { ok: false, debugInfo: "Gemini network error" };
@@ -174,18 +238,18 @@ async function tryGemini(imageDataUrl: string, lang: "vi" | "en"): Promise<Provi
       const text: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) return { ok: false, debugInfo: "Gemini returned empty content" };
       try {
-        return { ok: true, parsed: JSON.parse(text) };
+        return { ok: true, parsed: normalizeResult(extractJson(text)) };
       } catch {
         return { ok: false, debugInfo: "Gemini returned invalid JSON" };
       }
     }
     const errText = await r.text().catch(() => "");
     console.error(`Gemini API error ${r.status} (attempt ${attempt}/${maxAttempts})`, errText);
-    const retryable = r.status === 503 || r.status === 429;
+    const retryable = r.status === 408 || r.status === 429 || r.status >= 500;
     if (!retryable || attempt === maxAttempts) {
       return { ok: false, debugInfo: `Gemini ${r.status}: ${errText.slice(0, 300)}` };
     }
-    await new Promise((resolve) => setTimeout(resolve, attempt * 1200));
+    await new Promise((resolve) => setTimeout(resolve, attempt * 1000 + Math.random() * 400));
   }
   return { ok: false, debugInfo: "Gemini exhausted retries" };
 }
@@ -201,6 +265,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (!imageDataUrl || typeof imageDataUrl !== "string" || !imageDataUrl.startsWith("data:image/")) {
     res.status(400).json({ status: "error", message: "imageDataUrl is required and must be a base64 data URL." });
+    return;
+  }
+
+  if (Buffer.byteLength(imageDataUrl, "utf8") > MAX_IMAGE_DATA_URL_BYTES) {
+    res.status(413).json({
+      status: "error",
+      message:
+        lang === "vi"
+          ? "Ảnh quá lớn để nhận diện. Vui lòng chọn ảnh khác hoặc thử lại."
+          : "The image is too large to analyze. Please choose another image and try again.",
+    });
     return;
   }
 
