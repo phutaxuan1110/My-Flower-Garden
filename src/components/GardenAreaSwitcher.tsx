@@ -39,6 +39,23 @@ export function GardenAreaSwitcher({
   const openedAreaIds = useOpenedAreaIds();
   const displayAreas = buildDisplayAreas(areas, placements, openedAreaIds);
 
+  // Which single area (per theme) gets the ambient sway/glimmer treatment —
+  // i.e. the first garden and the first river. This intentionally keys off
+  // the first *real* (non-virtual) area of each theme actually being shown
+  // right now, rather than trusting `area.order === 0 / 1` directly: a
+  // historically duplicated/reseeded row (see gardenLock.ts) can leave an
+  // area's stored `order` no longer matching its true position, which would
+  // otherwise silently turn the ambient layer off for an area that is, from
+  // the person's point of view, plainly their first garden or first river.
+  const firstAmbientIdByTheme = new Map<string, string>();
+  for (const a of displayAreas) {
+    if (a.isVirtual) continue;
+    if (!firstAmbientIdByTheme.has(a.theme)) firstAmbientIdByTheme.set(a.theme, a.id);
+  }
+  function isAmbientArea(areaId: string, theme: string) {
+    return firstAmbientIdByTheme.get(theme) === areaId;
+  }
+
   function handleScroll() {
     const el = scrollerRef.current;
     if (!el) return;
@@ -91,7 +108,7 @@ export function GardenAreaSwitcher({
                 bouquetsById={bouquetsById}
                 onOpenBouquet={onOpenBouquet}
                 onUnlocked={() => {}}
-                ambientAnimation={area.order === 0 || area.order === 1}
+                ambientAnimation={isAmbientArea(area.id, area.theme)}
               />
             ) : (
               <div className="relative">
@@ -99,7 +116,7 @@ export function GardenAreaSwitcher({
                   placements={placements.filter((p) => p.gardenAreaId === area.id)}
                   bouquetsById={bouquetsById}
                   theme={area.theme}
-                  ambientAnimation={area.order === 0 || area.order === 1}
+                  ambientAnimation={isAmbientArea(area.id, area.theme)}
                   onOpenBouquet={onOpenBouquet}
                 />
                 {/* Only the first garden is guaranteed to exist (and be unlocked)
