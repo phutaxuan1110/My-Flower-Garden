@@ -4,21 +4,11 @@ import type { Language } from "../i18n/translations";
 
 /**
  * FlowerAIService is the seam between the UI and whichever vision provider
- * does the real recognition. Swap MockFlowerAIService for a real
- * implementation without touching any component.
+ * does the real recognition.
  *
- * PRODUCTION SETUP (not wired up in this demo):
- *   1. Never call a vision provider with an API key from the browser.
- *   2. Add a server route, e.g. POST /api/ai/identify-flowers, that:
- *        - accepts a Supabase Storage path (not a base64 blob) for the photo
- *        - loads server-side credentials from process.env.FLOWER_AI_API_KEY
- *        - calls the provider (e.g. Anthropic/OpenAI vision, Google Vision,
- *          PlantNet) with a JSON-schema-constrained prompt matching
- *          AIRecognitionResultSchema below, asking it to respond in the
- *          requested language
- *        - validates the response with that schema before returning it
- *   3. Point `RealFlowerAIService.endpoint` at that route and swap the
- *      export at the bottom of this file.
+ * Wired up to Google Gemini via a server route (see /api/identify-flowers.ts)
+ * so the API key never reaches the browser. To swap providers, write a new
+ * class implementing this interface and change the export at the bottom.
  */
 export interface FlowerAIService {
   analyze(
@@ -307,6 +297,64 @@ export class MockFlowerAIService implements FlowerAIService {
   }
 }
 
-// Swap this export for a RealFlowerAIService(`/api/ai/identify-flowers`) once
-// a server route and provider credentials exist.
-export const flowerAIService: FlowerAIService = new MockFlowerAIService();
+// ---- Production adapter -----------------------------------------------
+// Calls our own server route (never the AI provider directly from the
+// browser), which holds the real API key. See /api/identify-flowers.ts.
+
+export class RealFlowerAIService implements FlowerAIService {
+  private endpoint: string;
+
+  constructor(endpoint: string = "/api/identify-flowers") {
+    this.endpoint = endpoint;
+  }
+
+  async analyze(
+    imageDataUrl: string,
+    opts?: { timeoutMs?: number; language?: Language }
+  ): Promise<AIRecognitionOutcome> {
+    const timeoutMs = opts?.timeoutMs ?? 25000;
+    const language = opts?.language ?? "vi";
+    const genericError =
+      language === "vi"
+        ? "Chúng tôi không thể nhận diện các loài hoa trong ảnh này. Vui lòng thử lại."
+        : "We couldn't identify the flowers in this photo. Please try again.";
+    const timeoutMessage =
+      language === "vi"
+        ? "Việc này đang mất nhiều thời gian hơn dự kiến. Vui lòng thử lại."
+        : "This is taking longer than expected. Please try again.";
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const res = await fetch(this.endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUrl, language }),
+        signal: controller.signal,
+      });
+      const body = await res.json().catch(() => null);
+
+      if (!res.ok || !body || body.status !== "success") {
+        return { status: "error", message: body?.message ?? genericError };
+      }
+
+      const parsed = AIRecognitionResultSchema.safeParse(body.result);
+      if (!parsed.success) {
+        return { status: "error", message: genericError };
+      }
+      return { status: "success", result: parsed.data };
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return { status: "error", message: timeoutMessage };
+      }
+      return { status: "error", message: genericError };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+}
+
+// Swap to `new MockFlowerAIService()` if you ever need to demo the UI
+// without a live Gemini key (e.g. GEMINI_API_KEY not set yet).
+export const flowerAIService: FlowerAIService = new RealFlowerAIService();
