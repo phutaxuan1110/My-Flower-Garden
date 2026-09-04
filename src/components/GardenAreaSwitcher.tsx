@@ -19,7 +19,10 @@ export function GardenAreaSwitcher({ areas, placements, bouquetsById, onOpenBouq
   function handleScroll() {
     const el = scrollerRef.current;
     if (!el) return;
-    const index = Math.round(el.scrollLeft / el.clientWidth);
+    // Snap step is item width + the flex `gap-4` (16px) between items, not
+    // just clientWidth, now that spacing comes from a real gap instead of
+    // per-item padding.
+    const index = Math.round(el.scrollLeft / (el.clientWidth + 16));
     setActiveIndex(index);
   }
 
@@ -28,10 +31,10 @@ export function GardenAreaSwitcher({ areas, placements, bouquetsById, onOpenBouq
       <div
         ref={scrollerRef}
         onScroll={handleScroll}
-        className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto px-5"
+        className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-5"
       >
         {displayAreas.map((area) => (
-          <div key={area.id} className="w-full shrink-0 snap-center px-2 first:pl-0 last:pr-0">
+          <div key={area.id} className="w-full shrink-0 snap-center">
             <p
               aria-hidden={area.isLocked ? "true" : undefined}
               className={`mb-2 font-display text-sm italic text-[var(--color-muted)] ${

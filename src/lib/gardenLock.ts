@@ -14,7 +14,6 @@
 import { generateAreaName } from "./gardenNaming";
 import { SLOTS_PER_GARDEN_AREA, themeForAreaOrder } from "./gardenLayout";
 import type { GardenArea, GardenPlacement } from "../types";
-
 export interface DisplayGardenArea {
   id: string;
   name: string;
@@ -57,7 +56,14 @@ export function buildDisplayAreas(areas: GardenArea[], placements: GardenPlaceme
   const result: DisplayGardenArea[] = unlocked.map((area) => ({
     id: area.id,
     name: area.name,
-    theme: area.theme,
+    // Deterministic from `order`, not the stored `theme` column: areas
+    // created before the alternating garden/river scheme existed can have
+    // a stale value (e.g. old default "spring") saved in the database,
+    // which made every area render the same garden artwork instead of
+    // alternating. Order is the single source of truth for which backdrop
+    // an area shows, so it's recomputed here every time rather than
+    // trusted from storage.
+    theme: themeForAreaOrder(area.order),
     order: area.order,
     filledCount: countFilledSlots(area, placements),
     capacity: SLOTS_PER_GARDEN_AREA,
@@ -74,7 +80,7 @@ export function buildDisplayAreas(areas: GardenArea[], placements: GardenPlaceme
     result.push({
       id: existingNext?.id ?? `virtual-${nextOrder}`,
       name: existingNext?.name ?? generateAreaName(nextOrder),
-      theme: existingNext?.theme ?? themeForAreaOrder(nextOrder),
+      theme: themeForAreaOrder(nextOrder),
       order: nextOrder,
       filledCount: 0,
       capacity: SLOTS_PER_GARDEN_AREA,
