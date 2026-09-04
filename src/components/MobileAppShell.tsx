@@ -18,13 +18,12 @@ import { useChromeVisibility } from "../hooks/useChromeVisibility";
  * `absolute bottom-0` inside that shell) below the fold or under Safari's
  * toolbar.
  *
- * Fix: give the shell a *definite* height using the dynamic viewport unit
- * (`h-dvh`, with a `vh` fallback via the `.sheet-fill-height`-style pattern
- * baked into Tailwind's `dvh` utilities) so it always matches the actually
- * visible viewport and updates live as Safari's chrome shows/hides. The
- * inner content area then truly clips/scrolls within that fixed-height
- * shell, and the nav — pinned to the shell's bottom edge — stays exactly at
- * the visible bottom of the screen, including its safe-area inset.
+ * Fix: let `position: fixed; inset: 0; height: auto` resolve the shell's
+ * height from both physical viewport edges. Do not combine `inset: 0` with
+ * `100dvh`: iOS standalone mode can report a dvh that is shorter by a safe
+ * area, and an explicit height makes CSS ignore the bottom inset. The inner
+ * content area then clips/scrolls inside the stretched shell while the nav
+ * occupies its own row at the true bottom edge.
  *
  * Root cause of the "bottom nav flashes for a frame when opening Garden Edit
  * Mode" bug: whether Edit Mode is active lived *only* in React state
@@ -58,7 +57,7 @@ export function MobileAppShell({ children }: { children: React.ReactNode }) {
   const hideChrome = isGardenEditActive || isEnteringGardenEdit || isBouquetDetail || isChromeHidden;
 
   return (
-    <div className="full-bleed-height fixed inset-0 w-full overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)] md:static md:inset-auto md:h-auto md:min-h-dvh md:w-auto md:overflow-visible md:flex md:items-center md:justify-center md:py-10">
+    <div className="fixed inset-0 h-auto min-h-0 w-full overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)] md:static md:inset-auto md:min-h-dvh md:w-auto md:overflow-visible md:flex md:items-center md:justify-center md:py-10">
       <div className="paper-grain relative mx-auto flex h-full w-full max-w-[480px] flex-col bg-[var(--color-bg)] md:h-auto md:min-h-[880px] md:rounded-[36px] md:shadow-2xl md:shadow-[var(--color-rose)]/15 md:ring-1 md:ring-[var(--color-line)]">
         <div className={`no-scrollbar min-h-0 flex-1 overflow-y-auto ${hideChrome ? "" : "app-content-padding"}`}>
           {children}

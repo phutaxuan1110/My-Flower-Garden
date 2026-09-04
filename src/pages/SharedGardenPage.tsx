@@ -156,12 +156,12 @@ export function SharedGardenPage() {
   }, [data, placements]);
 
   if (!data && !error) {
-    return <div className="full-bleed-height fixed inset-0 animate-pulse bg-[var(--color-bg)]" />;
+    return <div className="fixed inset-0 h-auto min-h-0 animate-pulse bg-[var(--color-bg)]" />;
   }
 
   if (error || !data) {
     return (
-      <div className="full-bleed-height fixed inset-0 flex items-center justify-center bg-[var(--color-bg)] px-8 text-center">
+      <div className="fixed inset-0 flex h-auto min-h-0 items-center justify-center bg-[var(--color-bg)] px-8 text-center">
         <div>
           <Flower2 className="mx-auto text-[var(--color-rose)]" size={36} strokeWidth={1.5} />
           <h1 className="mt-4 font-display text-2xl text-[var(--color-ink)]">{t("share.notFoundTitle")}</h1>
@@ -175,7 +175,7 @@ export function SharedGardenPage() {
   const openBouquet = (id: string) => navigate(`/share/${shareToken}/bouquet/${id}`);
 
   return (
-    <div className="full-bleed-height fixed inset-0 w-full overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)] md:flex md:items-center md:justify-center md:py-10">
+    <div className="fixed inset-0 h-auto min-h-0 w-full overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)] md:flex md:items-center md:justify-center md:py-10">
       <main className="paper-grain relative mx-auto flex h-full w-full max-w-[480px] flex-col overflow-hidden bg-[var(--color-bg)] md:h-[880px] md:rounded-[36px] md:shadow-2xl">
         {detailBouquet ? (
           <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
