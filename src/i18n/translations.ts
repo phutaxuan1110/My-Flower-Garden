@@ -108,9 +108,15 @@ const dict = {
   "auth.signUpCta": { vi: "Tạo tài khoản", en: "Create account" },
   "auth.loading": { vi: "Đang xử lý…", en: "Working…" },
   "auth.checkEmail": {
-    vi: "Kiểm tra email để xác nhận tài khoản, sau đó quay lại đăng nhập.",
-    en: "Check your email to confirm your account, then come back and sign in.",
+    vi: "Kiểm tra email và bấm vào liên kết xác nhận. App sẽ tự động đăng nhập sau khi xác nhận thành công.",
+    en: "Check your email and tap the confirmation link. The app will sign you in automatically after confirmation.",
   },
+  "auth.emailNotConfirmed": {
+    vi: "Email chưa được xác nhận. Hãy mở liên kết trong email hoặc gửi lại email xác nhận.",
+    en: "Email has not been confirmed. Open the link in your email or resend the confirmation email.",
+  },
+  "auth.resendConfirmation": { vi: "Gửi lại email xác nhận", en: "Resend confirmation email" },
+  "auth.resendSent": { vi: "Đã gửi lại email xác nhận", en: "Confirmation email sent" },
   "auth.passwordHint": { vi: "Ít nhất 6 ký tự", en: "At least 6 characters" },
 
   // Shared actions

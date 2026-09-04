@@ -5,7 +5,7 @@ import { useAuth } from "../store/AuthProvider";
 import { useLanguage } from "../i18n/LanguageProvider";
 
 export function LoginPage() {
-  const { signIn, signUp } = useAuth();
+  const { callbackError, signIn, signUp, resendConfirmation } = useAuth();
   const { t } = useLanguage();
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
@@ -13,6 +13,9 @@ export function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmationSent, setConfirmationSent] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
+
+  const emailNotConfirmed = error?.toLowerCase().includes("email not confirmed") ?? false;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,6 +35,15 @@ export function LoginPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function handleResend() {
+    setError(null);
+    setBusy(true);
+    const result = await resendConfirmation(email);
+    setBusy(false);
+    if (result.error) setError(result.error);
+    else setResendSent(true);
   }
 
   return (
@@ -124,7 +136,22 @@ export function LoginPage() {
                 )}
               </div>
 
-              {error && <p className="text-sm text-[var(--color-rose)]">{error}</p>}
+              {(error || callbackError) && (
+                <p className="text-sm text-[var(--color-rose)]">
+                  {emailNotConfirmed ? t("auth.emailNotConfirmed") : error ?? callbackError}
+                </p>
+              )}
+
+              {emailNotConfirmed && (
+                <button
+                  type="button"
+                  disabled={busy || resendSent}
+                  onClick={handleResend}
+                  className="text-sm font-medium text-[var(--color-rose)] underline underline-offset-4 disabled:opacity-60"
+                >
+                  {resendSent ? t("auth.resendSent") : t("auth.resendConfirmation")}
+                </button>
+              )}
 
               <button
                 type="submit"
