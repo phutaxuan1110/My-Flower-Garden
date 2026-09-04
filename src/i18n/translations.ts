@@ -326,10 +326,21 @@ const dict = {
   },
   "garden.unlock.title": { vi: "Chúc mừng! 🎉", en: "Congratulations! 🎉" },
   "garden.unlock.body": {
-    vi: "Bạn đã lấp đầy khu vườn của mình và mở khoá",
-    en: "You filled up your garden and unlocked",
+    vi: "Bạn đã lấp đầy khu vườn của mình! Đã sẵn sàng để mở khoá",
+    en: "You filled up your garden! Ready to unlock",
   },
-  "garden.unlock.cta": { vi: "Khám phá ngay", en: "Explore now" },
+  "garden.unlock.cta": { vi: "Đến khu vườn", en: "Go to garden" },
+  "garden.unlockGate.cta": { vi: "Mở khoá", en: "Unlock" },
+  "add.placement.locked.title": { vi: "Khu vườn đang khoá", en: "This garden is locked" },
+  "add.placement.locked.body": {
+    vi: "Hãy quay lại Khu vườn và bấm mở khoá",
+    en: "Go back to Garden and tap unlock on",
+  },
+  "add.placement.locked.suffix": {
+    vi: "trước khi thêm bó hoa mới vào đó.",
+    en: "before adding a new bouquet there.",
+  },
+  "add.placement.locked.cta": { vi: "Đã hiểu", en: "Got it" },
 } as const;
 
 export type TranslationKey = keyof typeof dict;

@@ -4,6 +4,7 @@ import { SLOTS_PER_AREA } from "../lib/gardenLayout";
 import { themeForAreaOrder } from "../lib/gardenLayout";
 import { generateAreaName } from "../lib/gardenNaming";
 import { isAreaFull } from "../lib/gardenLock";
+import { isAreaOpened } from "../lib/openedAreasFlag";
 import type {
   Bouquet,
   BouquetFlower,
@@ -47,7 +48,9 @@ interface GardenContextValue {
   ) => Promise<void>;
   deleteBouquet: (id: string) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
-  ensureAreaWithFreeSlot: () => Promise<{ area: GardenArea; slotId: string }>;
+  ensureAreaWithFreeSlot: () => Promise<
+    { ok: true; area: GardenArea; slotId: string } | { ok: false; reason: "needs-unlock"; areaName: string }
+  >;
   placeBouquet: (args: {
     bouquetId: string;
     gardenAreaId: string;
@@ -173,19 +176,28 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
 
   const ensureAreaWithFreeSlot = useCallback(async () => {
     let areas = gardenAreas.length ? gardenAreas : await gardenRepository.listGardenAreas();
-    for (const area of areas) {
+    const sorted = [...areas].sort((a, b) => a.order - b.order);
+    for (const area of sorted) {
+      // An area that exists but hasn't been manually unlocked yet (see
+      // openedAreasFlag.ts / the "Mở khoá" gate) can't receive bouquets —
+      // skip it rather than treating its empty slots as available, and stop
+      // scanning further: a later area could only exist if this one were
+      // already full, which it isn't if it hasn't even been opened.
+      if (area.order > 0 && !isAreaOpened(area.id)) {
+        return { ok: false as const, reason: "needs-unlock" as const, areaName: generateAreaName(area.order) };
+      }
       const occupiedSlots = new Set(placements.filter((p) => p.gardenAreaId === area.id).map((p) => p.slotId));
       const freeSlot = SLOTS_PER_AREA.find((s) => !occupiedSlots.has(s.id));
-      if (freeSlot) return { area, slotId: freeSlot.id };
+      if (freeSlot) return { ok: true as const, area, slotId: freeSlot.id };
     }
-    const nextOrder = Math.max(-1, ...areas.map((a) => a.order)) + 1;
+    const nextOrder = Math.max(-1, ...sorted.map((a) => a.order)) + 1;
     const newArea = await gardenRepository.createGardenArea(
       generateAreaName(nextOrder),
       themeForAreaOrder(nextOrder),
       nextOrder
     );
     setGardenAreas((prev) => [...prev, newArea]);
-    return { area: newArea, slotId: SLOTS_PER_AREA[0].id };
+    return { ok: true as const, area: newArea, slotId: SLOTS_PER_AREA[0].id };
   }, [gardenAreas, placements]);
 
   /**

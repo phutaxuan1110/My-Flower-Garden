@@ -3,6 +3,8 @@ import { GardenEditActions } from "./GardenEditActions";
 import { GardenEditCanvas } from "./GardenEditCanvas";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import { useGarden } from "../store/GardenProvider";
+import { generateAreaName } from "../lib/gardenNaming";
+import { themeForAreaOrder } from "../lib/gardenLayout";
 import { useToast } from "../hooks/useToast";
 import { useLanguage } from "../i18n/LanguageProvider";
 import type { BouquetWithFlowers } from "../types";
@@ -93,13 +95,15 @@ export function GardenEditView({ targetBouquet, onExit }: GardenEditViewProps) {
           was the actual cause of the white gap above Garden Edit Mode. */}
       <div className="no-scrollbar flex-1 overflow-y-auto px-5 pb-4 pt-[max(16px,env(safe-area-inset-top))]">
         <p className="font-display text-base text-[var(--color-ink)]">{t("gardenEdit.title")}</p>
-        <p className="mb-3 font-display text-sm italic text-[var(--color-muted)]">{activeArea.name}</p>
+        <p className="mb-3 font-display text-sm italic text-[var(--color-muted)]">
+          {generateAreaName(activeArea.order)}
+        </p>
         {saveError && <p className="mb-3 text-sm text-[var(--color-rose)]">{saveError}</p>}
         <GardenEditCanvas
           otherPlacements={otherPlacements}
           bouquetsById={bouquetsById}
           targetBouquet={targetBouquet}
-          theme={activeArea.theme}
+          theme={themeForAreaOrder(activeArea.order)}
           draftSlotId={draftSlotId}
           onDraftChange={setDraftSlotId}
           onConflict={() => show(t("gardenEdit.slotOccupied"), "info")}

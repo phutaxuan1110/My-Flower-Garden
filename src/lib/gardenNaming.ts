@@ -1,12 +1,10 @@
-// Auto-naming for garden areas ("maps"/"levels") beyond the very first one.
+// Auto-naming for garden areas ("maps"/"levels").
 //
-// The first area keeps its original name ("Garden Corner", or whatever the
-// user has renamed it to) — this list only kicks in for area 2 onward, using
-// English names inspired by Greek mythology, with a bias toward figures and
-// places tied to flowers (Hyacinthus, Narcissus, Adonis, Chloris...) so the
-// names still feel at home in a flower-garden app.
+// The first two areas have fixed, hand-picked names; from area 3 onward the
+// list below cycles through English names inspired by Greek mythology, with
+// a bias toward figures and places tied to flowers or water so they still
+// feel at home in a flower-garden app.
 const GREEK_GARDEN_NAMES: string[] = [
-  "Chloris Grove",
   "Hyacinth Vale",
   "Narcissus Pool",
   "Anemone Fields",
@@ -28,11 +26,12 @@ const GREEK_GARDEN_NAMES: string[] = [
  * once it's actually created.
  */
 export function generateAreaName(order: number): string {
-  if (order <= 0) return "Garden Corner";
-  const idx = order - 1;
+  if (order <= 0) return "Hera's Sacred Garden";
+  if (order === 1) return "Castalian Spring";
+  const idx = order - 2;
   const cycle = Math.floor(idx / GREEK_GARDEN_NAMES.length);
   const base = GREEK_GARDEN_NAMES[idx % GREEK_GARDEN_NAMES.length];
-  return cycle === 0 ? base : `${base} II`.replace("II", romanNumeral(cycle + 1));
+  return cycle === 0 ? base : `${base} ${romanNumeral(cycle + 1)}`;
 }
 
 function romanNumeral(n: number): string {

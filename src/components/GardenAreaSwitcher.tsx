@@ -1,7 +1,9 @@
 import { useRef, useState } from "react";
 import { GardenCanvas } from "./GardenCanvas";
 import { LockedGardenArea } from "./LockedGardenArea";
+import { GardenUnlockGate } from "./GardenUnlockGate";
 import { buildDisplayAreas } from "../lib/gardenLock";
+import { useOpenedAreaIds } from "../lib/openedAreasFlag";
 import type { BouquetWithFlowers, GardenArea, GardenPlacement } from "../types";
 
 interface GardenAreaSwitcherProps {
@@ -14,7 +16,8 @@ interface GardenAreaSwitcherProps {
 export function GardenAreaSwitcher({ areas, placements, bouquetsById, onOpenBouquet }: GardenAreaSwitcherProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const displayAreas = buildDisplayAreas(areas, placements);
+  const openedAreaIds = useOpenedAreaIds();
+  const displayAreas = buildDisplayAreas(areas, placements, openedAreaIds);
 
   function handleScroll() {
     const el = scrollerRef.current;
@@ -43,8 +46,18 @@ export function GardenAreaSwitcher({ areas, placements, bouquetsById, onOpenBouq
             >
               {area.isLocked ? "Garden" : area.name}
             </p>
-            {area.isLocked ? (
+            {area.isVirtual ? (
               <LockedGardenArea />
+            ) : area.isLocked ? (
+              <GardenUnlockGate
+                areaId={area.id}
+                areaName={area.name}
+                theme={area.theme}
+                placements={placements.filter((p) => p.gardenAreaId === area.id)}
+                bouquetsById={bouquetsById}
+                onOpenBouquet={onOpenBouquet}
+                onUnlocked={() => {}}
+              />
             ) : (
               <GardenCanvas
                 placements={placements.filter((p) => p.gardenAreaId === area.id)}

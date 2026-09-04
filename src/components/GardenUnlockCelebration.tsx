@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageProvider";
+import { generateAreaName } from "../lib/gardenNaming";
 import type { GardenArea } from "../types";
 
 interface GardenUnlockCelebrationProps {
@@ -42,7 +43,8 @@ export function GardenUnlockCelebration({ area, onClose }: GardenUnlockCelebrati
               {t("garden.unlock.title")}
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted)]">
-              {t("garden.unlock.body")} <strong className="text-[var(--color-ink)]">{area.name}</strong>
+              {t("garden.unlock.body")}{" "}
+              <strong className="text-[var(--color-ink)]">{generateAreaName(area.order)}</strong>
             </p>
             <button
               type="button"

@@ -24,6 +24,14 @@ export interface DisplayGardenArea {
   isLocked: boolean;
   /** True for the synthesized "next" preview that doesn't exist in storage yet. */
   isVirtual: boolean;
+  /**
+   * True when the area already exists (isVirtual === false) and every area
+   * before it is full, but the person hasn't tapped the unlock gate yet —
+   * i.e. it's real and reachable, just still waiting for the explicit
+   * "Mở khoá" tap + water-reveal animation before it becomes an open,
+   * interactive garden.
+   */
+  isReadyToUnlock: boolean;
 }
 
 export function countFilledSlots(area: Pick<GardenArea, "id">, placements: GardenPlacement[]): number {
@@ -35,10 +43,21 @@ export function isAreaFull(area: Pick<GardenArea, "id">, placements: GardenPlace
 }
 
 /**
- * Consecutively unlocked real areas (sorted) + at most one trailing locked
- * preview while the current last unlocked area is not full.
+ * Consecutively unlocked real areas (sorted) + at most one trailing entry:
+ * either a "ready to unlock" gate (the next area already exists but hasn't
+ * been manually opened yet) or, if it doesn't exist yet, a locked preview.
+ *
+ * `openedAreaIds` holds the ids of areas the person has explicitly tapped
+ * "Mở khoá" on (see openedAreasFlag.ts) — the very first area (order 0)
+ * never needs this, it's always open.
  */
-export function buildDisplayAreas(areas: GardenArea[], placements: GardenPlacement[]): DisplayGardenArea[] {
+export function buildDisplayAreas(
+  areas: GardenArea[],
+  placements: GardenPlacement[],
+  openedAreaIds: ReadonlySet<string> = new Set()
+): DisplayGardenArea[] {
+  const isOpened = (area: GardenArea) => area.order === 0 || openedAreaIds.has(area.id);
+
   const sorted = [...areas].sort((a, b) => a.order - b.order);
   const unlocked: GardenArea[] = [];
 
@@ -46,16 +65,23 @@ export function buildDisplayAreas(areas: GardenArea[], placements: GardenPlaceme
   // actually unlocked. Older versions could create the next database row
   // early (or turn a duplicated seed row into the next order), which made two
   // unlocked copies of the same garden appear side by side. A real row is not
-  // enough to make an area visible: every preceding area must also be full.
+  // enough to make an area visible: every preceding area must also be full,
+  // and (beyond the very first) the person must have manually opened it.
   for (const area of sorted) {
     const previous = unlocked[unlocked.length - 1];
     if (previous && !isAreaFull(previous, placements)) break;
+    if (!isOpened(area)) break;
     unlocked.push(area);
   }
 
   const result: DisplayGardenArea[] = unlocked.map((area) => ({
     id: area.id,
-    name: area.name,
+    // Areas 1 and 2 always show their fixed names ("Hera's Sacred Garden",
+    // "Castalian Spring") regardless of what's stored — accounts created
+    // before these names existed still have the old stored value (e.g.
+    // "Garden Corner"), so the first two are always recomputed the same way
+    // the theme is, rather than trusted from storage.
+    name: area.order <= 1 ? generateAreaName(area.order) : area.name,
     // Deterministic from `order`, not the stored `theme` column: areas
     // created before the alternating garden/river scheme existed can have
     // a stale value (e.g. old default "spring") saved in the database,
@@ -69,6 +95,7 @@ export function buildDisplayAreas(areas: GardenArea[], placements: GardenPlaceme
     capacity: SLOTS_PER_GARDEN_AREA,
     isLocked: false,
     isVirtual: false,
+    isReadyToUnlock: false,
   }));
 
   const last = unlocked[unlocked.length - 1];
@@ -79,13 +106,17 @@ export function buildDisplayAreas(areas: GardenArea[], placements: GardenPlaceme
     const existingNext = sorted.find((area) => area.order === nextOrder);
     result.push({
       id: existingNext?.id ?? `virtual-${nextOrder}`,
-      name: existingNext?.name ?? generateAreaName(nextOrder),
+      name: generateAreaName(nextOrder),
       theme: themeForAreaOrder(nextOrder),
       order: nextOrder,
       filledCount: 0,
       capacity: SLOTS_PER_GARDEN_AREA,
       isLocked: Boolean(last), // area 0 (the very first) is never locked
       isVirtual: !existingNext,
+      // Real row already exists (created the moment the previous area was
+      // completed) and every area before it is full — it's just waiting on
+      // the person to tap the unlock gate.
+      isReadyToUnlock: Boolean(existingNext) && Boolean(last),
     });
   }
 

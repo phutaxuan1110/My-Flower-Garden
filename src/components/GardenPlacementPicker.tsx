@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { Lock } from "lucide-react";
 import { GardenCanvas } from "./GardenCanvas";
+import { generateAreaName } from "../lib/gardenNaming";
+import { themeForAreaOrder } from "../lib/gardenLayout";
 import { useGarden } from "../store/GardenProvider";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { VASE_STYLES, DECORATION_STYLES } from "../types";
@@ -43,6 +46,7 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
   // instead of offering a switcher + "create a new area" button that would
   // otherwise let someone jump ahead of a locked map.
   const [activeArea, setActiveArea] = useState<GardenArea | null>(null);
+  const [blockedByLock, setBlockedByLock] = useState<{ areaName: string } | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [vaseStyle, setVaseStyle] = useState<VaseStyle>("clay-pot");
   const [decorationStyle, setDecorationStyle] = useState<DecorationStyle>("none");
@@ -54,8 +58,10 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
 
   useEffect(() => {
     let cancelled = false;
-    ensureAreaWithFreeSlot().then(({ area }) => {
-      if (!cancelled) setActiveArea(area);
+    ensureAreaWithFreeSlot().then((result) => {
+      if (cancelled) return;
+      if (result.ok) setActiveArea(result.area);
+      else setBlockedByLock({ areaName: result.areaName });
     });
     return () => {
       cancelled = true;
@@ -118,19 +124,41 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
     setConflict(null);
   }
 
+  if (blockedByLock) {
+    return (
+      <div className="flex flex-col items-center gap-4 px-8 py-10 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-blush)] text-[var(--color-rose)]">
+          <Lock size={24} />
+        </div>
+        <p className="font-display text-lg text-[var(--color-ink)]">{t("add.placement.locked.title")}</p>
+        <p className="text-sm leading-relaxed text-[var(--color-muted)]">
+          {t("add.placement.locked.body")} <strong className="text-[var(--color-ink)]">{blockedByLock.areaName}</strong>{" "}
+          {t("add.placement.locked.suffix")}
+        </p>
+        <button
+          type="button"
+          onClick={onSkip}
+          className="mt-2 min-h-[44px] w-full rounded-full bg-[var(--color-ink)] text-sm font-semibold text-white active:scale-95"
+        >
+          {t("add.placement.locked.cta")}
+        </button>
+      </div>
+    );
+  }
+
   if (!activeArea) {
     return <div className="px-5 py-8 text-center text-sm text-[var(--color-muted)]">…</div>;
   }
 
   return (
     <div className="px-5 pb-4">
-      <p className="font-display text-lg italic text-[var(--color-muted)]">{activeArea.name}</p>
+      <p className="font-display text-lg italic text-[var(--color-muted)]">{generateAreaName(activeArea.order)}</p>
 
       <div className="mt-3">
         <GardenCanvas
           placements={placements.filter((p) => p.gardenAreaId === activeArea.id)}
           bouquetsById={bouquetsById}
-          theme={activeArea.theme}
+          theme={themeForAreaOrder(activeArea.order)}
           selectableSlotId={selectedSlot}
           onSelectSlot={handleSelectSlot}
         />
