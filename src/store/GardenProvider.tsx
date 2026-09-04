@@ -32,7 +32,6 @@ interface GardenContextValue {
   profile: UserProfile | null;
   bouquets: BouquetWithFlowers[];
   gardenAreas: GardenArea[];
-  onboardingComplete: boolean;
   totalCount: number;
   speciesCount: number;
   favoriteBouquets: BouquetWithFlowers[];
@@ -55,7 +54,6 @@ interface GardenContextValue {
   }) => Promise<{ ok: true } | { ok: false; occupiedByName: string; occupiedByBouquetId: string }>;
   swapPlacements: (bouquetIdA: string, bouquetIdB: string) => Promise<void>;
   removePlacement: (bouquetId: string) => Promise<void>;
-  completeOnboarding: () => Promise<void>;
   updateProfile: (patch: Partial<Pick<UserProfile, "displayName" | "gardenName">>) => Promise<void>;
 }
 
@@ -68,15 +66,13 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
   const [flowers, setFlowers] = useState<BouquetFlower[]>([]);
   const [gardenAreas, setGardenAreas] = useState<GardenArea[]>([]);
   const [placements, setPlacements] = useState<GardenPlacement[]>([]);
-  const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [p, b, areas, onboarded] = await Promise.all([
+    const [p, b, areas] = await Promise.all([
       gardenRepository.getProfile(),
       gardenRepository.listBouquets(),
       gardenRepository.listGardenAreas(),
-      gardenRepository.getOnboardingComplete(),
     ]);
     const allFlowers: BouquetFlower[] = [];
     for (const bouquet of b) {
@@ -89,7 +85,6 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
     setFlowers(allFlowers);
     setGardenAreas(areas);
     setPlacements(allPlacements);
-    setOnboardingComplete(onboarded);
     setLoading(false);
   }, []);
 
@@ -219,11 +214,6 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
     setPlacements((prev) => prev.filter((p) => p.bouquetId !== bouquetId));
   }, []);
 
-  const completeOnboarding = useCallback(async () => {
-    await gardenRepository.setOnboardingComplete(true);
-    setOnboardingComplete(true);
-  }, []);
-
   const updateProfile = useCallback(
     async (patch: Partial<Pick<UserProfile, "displayName" | "gardenName">>) => {
       const updated = await gardenRepository.updateProfile(patch);
@@ -237,7 +227,6 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
     profile,
     bouquets,
     gardenAreas,
-    onboardingComplete,
     totalCount,
     speciesCount,
     favoriteBouquets,
@@ -250,7 +239,6 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
     placeBouquet,
     swapPlacements,
     removePlacement,
-    completeOnboarding,
     updateProfile,
   };
 

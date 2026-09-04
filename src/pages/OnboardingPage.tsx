@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Sparkles, Sprout } from "lucide-react";
-import { useGarden } from "../store/GardenProvider";
+import { setOnboardingSeen } from "../lib/onboardingFlag";
+import { useAuth } from "../store/AuthProvider";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { useNavigate } from "react-router-dom";
 import type { TranslationKey } from "../i18n/translations";
@@ -14,13 +15,15 @@ const SLIDES: { icon: typeof Camera; titleKey: TranslationKey; bodyKey: Translat
 
 export function OnboardingPage() {
   const [index, setIndex] = useState(0);
-  const { completeOnboarding } = useGarden();
   const { t } = useLanguage();
+  const { session } = useAuth();
   const navigate = useNavigate();
 
-  async function finish() {
-    await completeOnboarding();
-    navigate("/garden", { replace: true });
+  function finish() {
+    setOnboardingSeen(true);
+    // Replaying onboarding from Profile while already signed in should land
+    // back in the app, not send an authenticated user to the login screen.
+    navigate(session ? "/garden" : "/login", { replace: true });
   }
 
   const slide = SLIDES[index];

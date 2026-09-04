@@ -1,34 +1,35 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Globe, RotateCcw, Sprout, User } from "lucide-react";
+import { Globe, LogOut, Sprout, User } from "lucide-react";
 import { useGarden } from "../store/GardenProvider";
+import { useAuth } from "../store/AuthProvider";
 import { useToast } from "../hooks/useToast";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { ConfirmationDialog } from "../components/ConfirmationDialog";
-import { gardenRepository } from "../lib/repository";
+import { setOnboardingSeen } from "../lib/onboardingFlag";
 
 export function ProfilePage() {
   const { profile, updateProfile, totalCount } = useGarden();
+  const { signOut } = useAuth();
   const { show } = useToast();
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState(profile?.displayName ?? "");
   const [gardenName, setGardenName] = useState(profile?.gardenName ?? "");
-  const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
 
   async function handleSave() {
     await updateProfile({ displayName: displayName.trim() || "Friend", gardenName: gardenName.trim() || "My Flower Garden" });
     show(t("profile.saved"));
   }
 
-  async function handleReset() {
-    localStorage.clear();
-    setConfirmReset(false);
-    window.location.reload();
+  async function handleSignOut() {
+    setConfirmSignOut(false);
+    await signOut();
   }
 
-  async function replayOnboarding() {
-    await gardenRepository.setOnboardingComplete(false);
+  function replayOnboarding() {
+    setOnboardingSeen(false);
     navigate("/onboarding");
   }
 
@@ -120,23 +121,22 @@ export function ProfilePage() {
         </button>
         <button
           type="button"
-          onClick={() => setConfirmReset(true)}
+          onClick={() => setConfirmSignOut(true)}
           className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full text-sm font-medium text-[var(--color-rose)]"
         >
-          <RotateCcw size={15} /> {t("profile.resetData")}
+          <LogOut size={15} /> {t("profile.signOut")}
         </button>
       </div>
 
       <p className="mt-8 text-center text-xs leading-relaxed text-[var(--color-muted)]">{t("profile.footerNote")}</p>
 
       <ConfirmationDialog
-        open={confirmReset}
-        title={t("profile.resetConfirmTitle")}
-        description={t("profile.resetConfirmBody")}
-        confirmLabel={t("profile.resetConfirmCta")}
-        destructive
-        onConfirm={handleReset}
-        onCancel={() => setConfirmReset(false)}
+        open={confirmSignOut}
+        title={t("profile.signOutConfirmTitle")}
+        description={t("profile.signOutConfirmBody")}
+        confirmLabel={t("profile.signOut")}
+        onConfirm={handleSignOut}
+        onCancel={() => setConfirmSignOut(false)}
       />
     </div>
   );

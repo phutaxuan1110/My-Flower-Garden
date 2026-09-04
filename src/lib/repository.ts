@@ -1,4 +1,5 @@
 import { makeId, nowIso } from "./id";
+import { SupabaseGardenRepository } from "./repository.supabase";
 import {
   bouquetImageReference,
   deleteBouquetImage,
@@ -50,9 +51,6 @@ export interface GardenRepository {
   }): Promise<{ ok: true; placement: GardenPlacement } | { ok: false; reason: "slot-occupied"; occupiedBy: string }>;
   swapPlacements(bouquetIdA: string, bouquetIdB: string): Promise<void>;
   removePlacement(bouquetId: string): Promise<void>;
-
-  getOnboardingComplete(): Promise<boolean>;
-  setOnboardingComplete(value: boolean): Promise<void>;
 }
 
 const KEYS = {
@@ -61,7 +59,6 @@ const KEYS = {
   flowers: "mfg:flowers",
   gardenAreas: "mfg:gardenAreas",
   placements: "mfg:placements",
-  onboarding: "mfg:onboardingComplete",
 } as const;
 
 function read<T>(key: string, fallback: T): T {
@@ -318,15 +315,9 @@ export class LocalStorageGardenRepository implements GardenRepository {
     write(KEYS.placements, placements);
     return tick(undefined, 200);
   }
-
-  async getOnboardingComplete(): Promise<boolean> {
-    return tick(read<boolean>(KEYS.onboarding, false), 30);
-  }
-
-  async setOnboardingComplete(value: boolean): Promise<void> {
-    write(KEYS.onboarding, value);
-    return tick(undefined, 30);
-  }
 }
 
-export const gardenRepository: GardenRepository = new LocalStorageGardenRepository();
+// LocalStorageGardenRepository above is kept only as an offline reference
+// implementation. The app now requires sign-in, so persistence is backed by
+// Supabase — see repository.supabase.ts for that implementation.
+export const gardenRepository: GardenRepository = new SupabaseGardenRepository();

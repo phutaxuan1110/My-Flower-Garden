@@ -77,13 +77,31 @@ const dict = {
   "profile.languageVi": { vi: "Tiếng Việt", en: "Vietnamese" },
   "profile.languageEn": { vi: "Tiếng Anh", en: "English" },
   "profile.replayOnboarding": { vi: "Xem lại hướng dẫn", en: "Replay onboarding" },
-  "profile.resetData": { vi: "Xóa toàn bộ dữ liệu vườn", en: "Reset all garden data" },
-  "profile.resetConfirmTitle": { vi: "Xóa toàn bộ dữ liệu?", en: "Reset all garden data?" },
-  "profile.resetConfirmBody": {
-    vi: "Thao tác này sẽ xóa vĩnh viễn mọi bó hoa, ảnh và vị trí đã đặt trên thiết bị này.",
-    en: "This permanently deletes every bouquet, photo and placement on this device.",
+  "profile.signOut": { vi: "Đăng xuất", en: "Sign out" },
+  "profile.signOutConfirmTitle": { vi: "Đăng xuất?", en: "Sign out?" },
+  "profile.signOutConfirmBody": {
+    vi: "Khu vườn của bạn đã được lưu an toàn — bạn có thể đăng nhập lại bất cứ lúc nào để tiếp tục.",
+    en: "Your garden is safely saved — you can sign back in anytime to pick up where you left off.",
   },
-  "profile.resetConfirmCta": { vi: "Xóa tất cả", en: "Reset everything" },
+
+  // Auth (login/sign up)
+  "auth.title": { vi: "Chào mừng trở lại", en: "Welcome back" },
+  "auth.subtitle": {
+    vi: "Đăng nhập để đồng bộ khu vườn của bạn trên mọi thiết bị.",
+    en: "Sign in to sync your garden across every device.",
+  },
+  "auth.emailLabel": { vi: "Email", en: "Email" },
+  "auth.passwordLabel": { vi: "Mật khẩu", en: "Password" },
+  "auth.signInTab": { vi: "Đăng nhập", en: "Sign in" },
+  "auth.signUpTab": { vi: "Đăng ký", en: "Sign up" },
+  "auth.signInCta": { vi: "Đăng nhập", en: "Sign in" },
+  "auth.signUpCta": { vi: "Tạo tài khoản", en: "Create account" },
+  "auth.loading": { vi: "Đang xử lý…", en: "Working…" },
+  "auth.checkEmail": {
+    vi: "Kiểm tra email để xác nhận tài khoản, sau đó quay lại đăng nhập.",
+    en: "Check your email to confirm your account, then come back and sign in.",
+  },
+  "auth.passwordHint": { vi: "Ít nhất 6 ký tự", en: "At least 6 characters" },
   "profile.footerNote": {
     vi: "Bản demo này chỉ lưu khu vườn trên thiết bị của bạn. Ảnh, bó hoa và vị trí được lưu cục bộ và vẫn còn sau khi bạn tải lại trang.",
     en: "This demo stores your garden on this device only. Photos, bouquets and placements are saved locally and will still be here after you refresh.",
