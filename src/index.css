@@ -120,6 +120,25 @@
   .safe-bottom {
     padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
+
+  /* The mobile nav is portaled directly under <body>, outside every app
+     shell that clips scrolling content. The overscan layer paints beyond
+     the CSS layout viewport so iOS standalone mode cannot expose the page
+     background below the nav while resolving its home-indicator safe area. */
+  .bottom-navigation {
+    bottom: 0 !important;
+    isolation: isolate;
+  }
+  .bottom-navigation::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 100%;
+    right: 0;
+    left: 0;
+    height: calc(128px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.9);
+  }
   .safe-top {
     padding-top: calc(env(safe-area-inset-top) + 12px);
   }

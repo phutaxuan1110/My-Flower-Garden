@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { BottomNavigation } from "./BottomNavigation";
 import { useGardenEditMode } from "../hooks/useGardenEditMode";
@@ -40,19 +41,13 @@ import { useGardenEditMode } from "../hooks/useGardenEditMode";
  * render behind it. Because `useSearchParams` reflects the URL on the very
  * first render (no effect needed), this is correct from the first paint —
  * there is nothing to flash.
- * Root cause of "the bottom nav sits with a visible gap above the real
- * bottom edge of the screen" (nav renders, but with the page's own
- * background peeking in beneath it): unlike the splash screen (`App.tsx`),
- * `OnboardingPage`, and `LoginPage` — which all pin themselves with
- * `fixed inset-0` in *addition* to `.full-bleed-height` — this shell only
- * had the height class. `height: 100dvh` is usually accurate, but it's a
- * measured value that can briefly lag the real visual viewport (e.g. while
- * Safari's toolbar is mid-animation when the screenshot/paint happens), so
- * the shell came out a little shorter than the actual screen and the nav
- * (pinned to *this shell's* bottom edge, not the screen's) sat above the
- * true bottom. `fixed inset-0` pins the shell directly to the viewport's
- * edges regardless of any measured height, matching the pattern already
- * used everywhere else in the app.
+ * On iOS standalone mode, a fixed descendant can still be clipped at the
+ * shell's layout-viewport boundary while the physical safe-area region is
+ * painted below it. The mobile nav is therefore portaled directly to body,
+ * outside both overflow-clipping shell layers. Its CSS also paints an
+ * overscan strip below the nav, so the home-indicator region remains covered
+ * even while WebKit is reconciling the layout and visual viewports. Desktop
+ * keeps the nav inside the centered app frame.
  */
 export function MobileAppShell({ children }: { children: React.ReactNode }) {
   const { isActive: isGardenEditActive } = useGardenEditMode();
@@ -68,8 +63,19 @@ export function MobileAppShell({ children }: { children: React.ReactNode }) {
         <div className={`no-scrollbar flex-1 overflow-y-auto ${hideChrome ? "" : "app-content-padding"}`}>
           {children}
         </div>
-        {!hideChrome && <BottomNavigation />}
+        {!hideChrome && (
+          <div className="hidden md:block">
+            <BottomNavigation />
+          </div>
+        )}
       </div>
+      {!hideChrome &&
+        createPortal(
+          <div className="md:hidden">
+            <BottomNavigation />
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
