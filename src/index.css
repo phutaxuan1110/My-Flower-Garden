@@ -121,6 +121,13 @@
     padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 
+  /* Bottom navigation already has vertical padding inside each item. Keep
+     enough clearance for the iPhone home indicator without adding the full
+     safe-area value a second time to the nav's visible height. */
+  .bottom-nav-safe-bottom {
+    padding-bottom: max(8px, calc(env(safe-area-inset-bottom) - 12px));
+  }
+
   /* BottomNavigation is a non-scrolling flex item below the content pane.
      Isolation keeps its backdrop and shadow in their own stacking context. */
   .bottom-navigation {

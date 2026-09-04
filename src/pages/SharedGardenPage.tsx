@@ -238,7 +238,7 @@ export function SharedGardenPage() {
               )}
             </div>
 
-            <nav className="safe-bottom relative z-20 flex w-full shrink-0 gap-2 border-t border-[var(--color-line)] bg-white/95 px-5 pt-3 shadow-[0_-8px_24px_rgba(74,53,64,0.08)] backdrop-blur-md">
+            <nav className="bottom-nav-safe-bottom relative z-20 flex w-full shrink-0 gap-2 border-t border-[var(--color-line)] bg-white/95 px-5 pt-3 shadow-[0_-8px_24px_rgba(74,53,64,0.08)] backdrop-blur-md">
               <button
                 type="button"
                 onClick={() => navigate(`/share/${shareToken}`)}
