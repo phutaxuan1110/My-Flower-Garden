@@ -1,57 +1,41 @@
 // Vercel Serverless Function — runs on Node.js, never shipped to the browser.
-// This is the ONLY place GEMINI_API_KEY is read; the client never sees it.
+// This is the ONLY place GROQ_API_KEY is read; the client never sees it.
 //
 // Env var required (set in Vercel Project Settings -> Environment Variables,
 // and in a local .env for `vercel dev`):
-//   GEMINI_API_KEY=your-key-from-aistudio.google.com
+//   GROQ_API_KEY=your-key-from-console.groq.com/keys
 //
-// Model reference / to upgrade later: https://ai.google.dev/gemini-api/docs/models
+// Groq is free (no credit card), fast, and has a generous daily limit
+// (30 requests/min, 14,400/day as of writing). Model reference / to upgrade
+// later: https://console.groq.com/docs/vision — Groq's vision-capable model
+// lineup changes over time, so check that page if this model is retired.
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-// Uses the "-latest" alias so this keeps working as Google retires and
-// replaces specific model versions (which happens every few months) —
-// pin to an exact version like "gemini-3.5-flash" only if you need fully
-// deterministic behavior across model upgrades.
-const GEMINI_MODEL = "gemini-flash-latest";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-
-// Mirrors AIRecognitionResultSchema in src/lib/aiService.ts. Gemini's
-// "responseSchema" support forces the model to return exactly this shape, so
-// we don't need a loose free-text parse on our side.
-const RESPONSE_SCHEMA = {
-  type: "OBJECT",
-  properties: {
-    flowers: {
-      type: "ARRAY",
-      minItems: 1,
-      items: {
-        type: "OBJECT",
-        properties: {
-          commonName: { type: "STRING" },
-          scientificName: { type: "STRING" },
-          color: { type: "STRING" },
-          estimatedQuantity: { type: "INTEGER" },
-          confidence: { type: "NUMBER", description: "0 to 1" },
-          meaning: { type: "STRING" },
-          symbolism: { type: "ARRAY", items: { type: "STRING" } },
-        },
-        required: ["commonName", "confidence", "meaning"],
-      },
-    },
-    overallMeaning: { type: "STRING" },
-  },
-  required: ["flowers", "overallMeaning"],
-};
+const GROQ_MODEL = "qwen/qwen3.6-27b";
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 function buildPrompt(language: "vi" | "en"): string {
   const lang = language === "vi" ? "Vietnamese" : "English";
   return (
     `You are a florist and botanist. Identify every distinct flower species visible in this bouquet photo. ` +
-    `For each species, give: common name, scientific (Latin) name if known, dominant color, estimated stem count in the photo, ` +
-    `your confidence from 0 to 1, its traditional meaning, and up to 3 short symbolism keywords. ` +
-    `Also give one warm overall sentence about what the whole bouquet expresses together. ` +
-    `Respond entirely in ${lang}. If you are not confident an item is a real flower/greenery, omit it rather than guessing wildly.`
+    `Respond with ONLY a single JSON object, no markdown fences, no commentary, matching exactly this shape:\n` +
+    `{\n` +
+    `  "flowers": [\n` +
+    `    {\n` +
+    `      "commonName": string,\n` +
+    `      "scientificName": string (Latin name, omit key if unknown),\n` +
+    `      "color": string,\n` +
+    `      "estimatedQuantity": integer (stem count visible),\n` +
+    `      "confidence": number between 0 and 1,\n` +
+    `      "meaning": string (its traditional meaning),\n` +
+    `      "symbolism": array of up to 3 short keyword strings\n` +
+    `    }\n` +
+    `  ],\n` +
+    `  "overallMeaning": string (one warm sentence about what the whole bouquet expresses together)\n` +
+    `}\n` +
+    `Include at least one flower. Respond entirely in ${lang}. ` +
+    `If you are not confident an item is a real flower/greenery, omit it rather than guessing wildly.`
   );
 }
 
@@ -67,9 +51,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    res.status(500).json({ status: "error", message: "Server is missing GEMINI_API_KEY." });
+    res.status(500).json({ status: "error", message: "Server is missing GROQ_API_KEY." });
     return;
   }
 
@@ -89,50 +73,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const requestBody = JSON.stringify({
-      contents: [
+      model: GROQ_MODEL,
+      messages: [
         {
-          parts: [
-            { text: buildPrompt(lang) },
-            { inline_data: { mime_type: image.mimeType, data: image.base64 } },
+          role: "user",
+          content: [
+            { type: "text", text: buildPrompt(lang) },
+            { type: "image_url", image_url: { url: imageDataUrl } },
           ],
         },
       ],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: RESPONSE_SCHEMA,
-        // Flower ID from a photo doesn't need deep reasoning — keep thinking
-        // minimal so the response comes back in a few seconds, not ~1 minute.
-        thinkingConfig: { thinkingLevel: "low" },
-      },
+      temperature: 0.4,
+      max_completion_tokens: 1024,
+      response_format: { type: "json_object" },
     });
 
-    // Gemini occasionally returns 503 (model overloaded) or 429 (rate limited)
-    // under normal load — these are transient, so retry a couple of times
-    // with a short backoff before giving up.
-    let geminiRes: Response | null = null;
+    // Groq occasionally returns 503 (overloaded) or 429 (rate limited) under
+    // load — these are transient, so retry a couple of times with backoff.
+    let groqRes: Response | null = null;
     let lastErrText = "";
     const maxAttempts = 3;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const res = await fetch(GEMINI_URL, {
+      const r = await fetch(GROQ_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
         body: requestBody,
       });
-      if (res.ok) {
-        geminiRes = res;
+      if (r.ok) {
+        groqRes = r;
         break;
       }
-      lastErrText = await res.text().catch(() => "");
-      const retryable = res.status === 503 || res.status === 429;
-      console.error(`Gemini API error ${res.status} (attempt ${attempt}/${maxAttempts})`, lastErrText);
+      lastErrText = await r.text().catch(() => "");
+      const retryable = r.status === 503 || r.status === 429;
+      console.error(`Groq API error ${r.status} (attempt ${attempt}/${maxAttempts})`, lastErrText);
       if (!retryable || attempt === maxAttempts) {
-        geminiRes = res;
+        groqRes = r;
         break;
       }
       await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
     }
 
-    if (!geminiRes || !geminiRes.ok) {
+    if (!groqRes || !groqRes.ok) {
       res.status(502).json({
         status: "error",
         message:
@@ -143,8 +124,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    const data = await geminiRes.json();
-    const text: string | undefined = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const data = await groqRes.json();
+    const text: string | undefined = data?.choices?.[0]?.message?.content;
     if (!text) {
       res.status(502).json({
         status: "error",

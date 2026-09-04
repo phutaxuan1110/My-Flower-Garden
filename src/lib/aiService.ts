@@ -6,9 +6,10 @@ import type { Language } from "../i18n/translations";
  * FlowerAIService is the seam between the UI and whichever vision provider
  * does the real recognition.
  *
- * Wired up to Google Gemini via a server route (see /api/identify-flowers.ts)
- * so the API key never reaches the browser. To swap providers, write a new
- * class implementing this interface and change the export at the bottom.
+ * Wired up to Groq (free vision API) via a server route (see
+ * /api/identify-flowers.ts) so the API key never reaches the browser. To
+ * swap providers, write a new class implementing this interface and change
+ * the export at the bottom.
  */
 export interface FlowerAIService {
   analyze(
