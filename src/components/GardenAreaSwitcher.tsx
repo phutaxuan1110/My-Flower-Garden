@@ -4,6 +4,7 @@ import { LockedGardenArea } from "./LockedGardenArea";
 import { GardenUnlockGate } from "./GardenUnlockGate";
 import { EmptyGardenState } from "./EmptyGardenState";
 import { buildDisplayAreas } from "../lib/gardenLock";
+import type { DisplayGardenArea } from "../lib/gardenLock";
 import { useOpenedAreaIds } from "../lib/openedAreasFlag";
 import type { BouquetWithFlowers, GardenArea, GardenPlacement } from "../types";
 
@@ -25,6 +26,30 @@ interface GardenAreaSwitcherProps {
   showEmptyOverlay?: boolean;
 }
 
+/**
+ * Pick at most one real, interactive area per theme for ambient animation.
+ *
+ * Historical duplicate/reseed bugs can leave empty database rows before the
+ * area the person actually uses. Prefer an area with real placements so an
+ * empty stale row cannot consume a theme's single ambient slot. A newly
+ * opened, still-empty area remains eligible through the second pass.
+ */
+export function getAmbientAreaIds(displayAreas: DisplayGardenArea[]): ReadonlySet<string> {
+  const interactiveAreas = displayAreas.filter((area) => !area.isVirtual && !area.isLocked);
+  const selectedByTheme = new Map<string, string>();
+
+  for (const area of interactiveAreas) {
+    if (area.filledCount <= 0 || selectedByTheme.has(area.theme)) continue;
+    selectedByTheme.set(area.theme, area.id);
+  }
+
+  for (const area of interactiveAreas) {
+    if (!selectedByTheme.has(area.theme)) selectedByTheme.set(area.theme, area.id);
+  }
+
+  return new Set(selectedByTheme.values());
+}
+
 export function GardenAreaSwitcher({
   areas,
   placements,
@@ -39,22 +64,7 @@ export function GardenAreaSwitcher({
   const openedAreaIds = useOpenedAreaIds();
   const displayAreas = buildDisplayAreas(areas, placements, openedAreaIds);
 
-  // Which single area (per theme) gets the ambient sway/glimmer treatment —
-  // i.e. the first garden and the first river. This intentionally keys off
-  // the first *real* (non-virtual) area of each theme actually being shown
-  // right now, rather than trusting `area.order === 0 / 1` directly: a
-  // historically duplicated/reseeded row (see gardenLock.ts) can leave an
-  // area's stored `order` no longer matching its true position, which would
-  // otherwise silently turn the ambient layer off for an area that is, from
-  // the person's point of view, plainly their first garden or first river.
-  const firstAmbientIdByTheme = new Map<string, string>();
-  for (const a of displayAreas) {
-    if (a.isVirtual) continue;
-    if (!firstAmbientIdByTheme.has(a.theme)) firstAmbientIdByTheme.set(a.theme, a.id);
-  }
-  function isAmbientArea(areaId: string, theme: string) {
-    return firstAmbientIdByTheme.get(theme) === areaId;
-  }
+  const ambientAreaIds = getAmbientAreaIds(displayAreas);
 
   function handleScroll() {
     const el = scrollerRef.current;
@@ -108,7 +118,7 @@ export function GardenAreaSwitcher({
                 bouquetsById={bouquetsById}
                 onOpenBouquet={onOpenBouquet}
                 onUnlocked={() => {}}
-                ambientAnimation={isAmbientArea(area.id, area.theme)}
+                ambientAnimation={ambientAreaIds.has(area.id)}
               />
             ) : (
               <div className="relative">
@@ -116,7 +126,7 @@ export function GardenAreaSwitcher({
                   placements={placements.filter((p) => p.gardenAreaId === area.id)}
                   bouquetsById={bouquetsById}
                   theme={area.theme}
-                  ambientAnimation={isAmbientArea(area.id, area.theme)}
+                  ambientAnimation={ambientAreaIds.has(area.id)}
                   onOpenBouquet={onOpenBouquet}
                 />
                 {/* Only the first garden is guaranteed to exist (and be unlocked)
