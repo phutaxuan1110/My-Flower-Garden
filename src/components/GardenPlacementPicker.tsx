@@ -1,10 +1,9 @@
-import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { GardenCanvas } from "./GardenCanvas";
 import { useGarden } from "../store/GardenProvider";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { VASE_STYLES, DECORATION_STYLES } from "../types";
-import type { BouquetWithFlowers, DecorationStyle, GardenPlacement, VaseStyle } from "../types";
+import type { BouquetWithFlowers, DecorationStyle, GardenArea, GardenPlacement, VaseStyle } from "../types";
 import type { TranslationKey } from "../i18n/translations";
 
 interface GardenPlacementPickerProps {
@@ -30,15 +29,20 @@ const DECORATION_LABEL_KEYS: Record<DecorationStyle, TranslationKey> = {
 
 export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPlacementPickerProps) {
   const { t } = useLanguage();
-  const { gardenAreas, bouquets, ensureAreaWithFreeSlot, placeBouquet, swapPlacements, removePlacement } =
-    useGarden();
+  const { bouquets, ensureAreaWithFreeSlot, placeBouquet, swapPlacements, removePlacement } = useGarden();
   const placements: GardenPlacement[] = useMemo(
     () => bouquets.filter((b) => b.placement).map((b) => b.placement as GardenPlacement),
     [bouquets]
   );
 
-  const [areaIndex, setAreaIndex] = useState(0);
-  const [selectedArea, setSelectedArea] = useState<string | null>(gardenAreas[0]?.id ?? null);
+  // Which garden area a bouquet lands in is no longer something the person
+  // chooses here: areas must fill up strictly in order (see
+  // GardenProvider.ensureAreaWithFreeSlot / gardenLock.ts), so there is only
+  // ever exactly one area that can legally receive a new bouquet — the
+  // current, unlocked, not-yet-full one. This resolves it automatically
+  // instead of offering a switcher + "create a new area" button that would
+  // otherwise let someone jump ahead of a locked map.
+  const [activeArea, setActiveArea] = useState<GardenArea | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [vaseStyle, setVaseStyle] = useState<VaseStyle>("clay-pot");
   const [decorationStyle, setDecorationStyle] = useState<DecorationStyle>("none");
@@ -48,19 +52,22 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const bouquetsById = useMemo(() => new Map<string, BouquetWithFlowers>(bouquets.map((b) => [b.id, b])), [bouquets]);
-  const areas = gardenAreas;
-  const activeArea = areas[areaIndex];
+  useEffect(() => {
+    let cancelled = false;
+    ensureAreaWithFreeSlot().then(({ area }) => {
+      if (!cancelled) setActiveArea(area);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // Only resolve once when the picker opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  async function handleAddArea() {
-    const { area } = await ensureAreaWithFreeSlot();
-    if (!areas.find((a) => a.id === area.id)) {
-      setAreaIndex(areas.length);
-    }
-    setSelectedArea(area.id);
-  }
+  const bouquetsById = useMemo(() => new Map<string, BouquetWithFlowers>(bouquets.map((b) => [b.id, b])), [bouquets]);
 
   function handleSelectSlot(slotId: string) {
+    if (!activeArea) return;
     const occupant = placements.find((p) => p.gardenAreaId === activeArea.id && p.slotId === slotId);
     if (occupant && occupant.bouquetId !== bouquetId) {
       const occupantBouquet = bouquetsById.get(occupant.bouquetId);
@@ -72,7 +79,6 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
       });
       return;
     }
-    setSelectedArea(activeArea.id);
     setSelectedSlot(slotId);
     setError(null);
   }
@@ -118,33 +124,14 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
 
   return (
     <div className="px-5 pb-4">
-      <div className="flex items-center justify-between">
-        <p className="font-display text-lg italic text-[var(--color-muted)]">{activeArea.name}</p>
-        <div className="flex items-center gap-2">
-          {areas.map((a, i) => (
-            <button
-              key={a.id}
-              onClick={() => setAreaIndex(i)}
-              className={`h-2 w-2 rounded-full ${i === areaIndex ? "bg-[var(--color-rose)]" : "bg-[var(--color-line)]"}`}
-              aria-label={a.name}
-            />
-          ))}
-          <button
-            type="button"
-            onClick={handleAddArea}
-            aria-label="+"
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-blush)] text-[var(--color-rose)]"
-          >
-            <Plus size={14} />
-          </button>
-        </div>
-      </div>
+      <p className="font-display text-lg italic text-[var(--color-muted)]">{activeArea.name}</p>
 
       <div className="mt-3">
         <GardenCanvas
           placements={placements.filter((p) => p.gardenAreaId === activeArea.id)}
           bouquetsById={bouquetsById}
-          selectableSlotId={selectedArea === activeArea.id ? selectedSlot : null}
+          theme={activeArea.theme}
+          selectableSlotId={selectedSlot}
           onSelectSlot={handleSelectSlot}
         />
       </div>
@@ -226,7 +213,7 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
         <button
           type="button"
           disabled={!selectedSlot || isSaving}
-          onClick={() => selectedArea && selectedSlot && confirmPlacement(selectedArea, selectedSlot)}
+          onClick={() => activeArea && selectedSlot && confirmPlacement(activeArea.id, selectedSlot)}
           className="min-h-[44px] w-full rounded-full bg-[var(--color-rose)] text-sm font-semibold text-white shadow-md shadow-[var(--color-rose)]/30 transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isSaving ? t("add.placement.planting") : t("add.placement.plantHere")}

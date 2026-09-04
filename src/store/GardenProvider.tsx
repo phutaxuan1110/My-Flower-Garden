@@ -1,6 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { gardenRepository } from "../lib/repository";
 import { SLOTS_PER_AREA } from "../lib/gardenLayout";
+import { themeForAreaOrder } from "../lib/gardenLayout";
+import { generateAreaName } from "../lib/gardenNaming";
+import { isAreaFull } from "../lib/gardenLock";
 import type {
   Bouquet,
   BouquetFlower,
@@ -55,6 +58,9 @@ interface GardenContextValue {
   swapPlacements: (bouquetIdA: string, bouquetIdB: string) => Promise<void>;
   removePlacement: (bouquetId: string) => Promise<void>;
   updateProfile: (patch: Partial<Pick<UserProfile, "displayName" | "gardenName">>) => Promise<void>;
+  /** The area that just got unlocked by completing the one before it, or null. */
+  newlyUnlockedArea: GardenArea | null;
+  dismissUnlockNotice: () => void;
 }
 
 const GardenContext = createContext<GardenContextValue | null>(null);
@@ -66,6 +72,7 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
   const [flowers, setFlowers] = useState<BouquetFlower[]>([]);
   const [gardenAreas, setGardenAreas] = useState<GardenArea[]>([]);
   const [placements, setPlacements] = useState<GardenPlacement[]>([]);
+  const [newlyUnlockedArea, setNewlyUnlockedArea] = useState<GardenArea | null>(null);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -171,13 +178,44 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
       const freeSlot = SLOTS_PER_AREA.find((s) => !occupiedSlots.has(s.id));
       if (freeSlot) return { area, slotId: freeSlot.id };
     }
+    const nextOrder = areas.length; // areas are 0-indexed by creation order
     const newArea = await gardenRepository.createGardenArea(
-      `Garden Corner ${areas.length + 1}`,
-      "spring"
+      generateAreaName(nextOrder),
+      themeForAreaOrder(nextOrder)
     );
     setGardenAreas((prev) => [...prev, newArea]);
     return { area: newArea, slotId: SLOTS_PER_AREA[0].id };
   }, [gardenAreas, placements]);
+
+  /**
+   * After a bouquet lands in a slot, check whether that placement just
+   * completed its area (every slot now filled) and, if so, immediately
+   * create the next area so it's ready and already unlocked — the whole
+   * point of "unlocking" a map is that the moment the previous one is
+   * finished, the next one is there waiting, not created lazily the next
+   * time someone tries to add a bouquet. Surfaces the newly created area via
+   * `newlyUnlockedArea` so the UI can show a congratulations popup.
+   */
+  const materializeNextAreaIfNeeded = useCallback(
+    async (filledAreaId: string, freshPlacements: GardenPlacement[]) => {
+      const areas = gardenAreas.length ? gardenAreas : await gardenRepository.listGardenAreas();
+      const filledArea = areas.find((a) => a.id === filledAreaId);
+      if (!filledArea) return;
+      if (!isAreaFull(filledArea, freshPlacements)) return;
+      const alreadyHasNext = areas.some((a) => a.order === filledArea.order + 1);
+      if (alreadyHasNext) return;
+      const nextOrder = filledArea.order + 1;
+      const newArea = await gardenRepository.createGardenArea(
+        generateAreaName(nextOrder),
+        themeForAreaOrder(nextOrder)
+      );
+      setGardenAreas((prev) => [...prev, newArea]);
+      setNewlyUnlockedArea(newArea);
+    },
+    [gardenAreas]
+  );
+
+  const dismissUnlockNotice = useCallback(() => setNewlyUnlockedArea(null), []);
 
   const placeBouquet = useCallback(
     async (args: {
@@ -198,9 +236,10 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
       }
       const fresh = await gardenRepository.listPlacements();
       setPlacements(fresh);
+      await materializeNextAreaIfNeeded(args.gardenAreaId, fresh);
       return { ok: true as const };
     },
-    [bouquets]
+    [bouquets, materializeNextAreaIfNeeded]
   );
 
   const swapPlacements = useCallback(async (bouquetIdA: string, bouquetIdB: string) => {
@@ -240,6 +279,8 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
     swapPlacements,
     removePlacement,
     updateProfile,
+    newlyUnlockedArea,
+    dismissUnlockNotice,
   };
 
   return <GardenContext.Provider value={value}>{children}</GardenContext.Provider>;

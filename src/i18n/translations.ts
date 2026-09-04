@@ -317,6 +317,19 @@ const dict = {
   "occasion.Thank You": { vi: "Cảm ơn", en: "Thank You" },
   "occasion.Just Because": { vi: "Không cần lý do", en: "Just Because" },
   "occasion.Custom": { vi: "Khác", en: "Custom" },
+
+  // Garden area lock / unlock (multi-map progression)
+  "garden.lock.title": { vi: "Khu vườn bí ẩn", en: "A hidden garden" },
+  "garden.lock.description": {
+    vi: "Hoàn thành khu vườn hiện tại để khám phá nơi này.",
+    en: "Complete your current garden to discover this place.",
+  },
+  "garden.unlock.title": { vi: "Chúc mừng! 🎉", en: "Congratulations! 🎉" },
+  "garden.unlock.body": {
+    vi: "Bạn đã lấp đầy khu vườn của mình và mở khoá",
+    en: "You filled up your garden and unlocked",
+  },
+  "garden.unlock.cta": { vi: "Khám phá ngay", en: "Explore now" },
 } as const;
 
 export type TranslationKey = keyof typeof dict;

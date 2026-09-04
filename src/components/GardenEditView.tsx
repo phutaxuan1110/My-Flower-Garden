@@ -99,6 +99,7 @@ export function GardenEditView({ targetBouquet, onExit }: GardenEditViewProps) {
           otherPlacements={otherPlacements}
           bouquetsById={bouquetsById}
           targetBouquet={targetBouquet}
+          theme={activeArea.theme}
           draftSlotId={draftSlotId}
           onDraftChange={setDraftSlotId}
           onConflict={() => show(t("gardenEdit.slotOccupied"), "info")}

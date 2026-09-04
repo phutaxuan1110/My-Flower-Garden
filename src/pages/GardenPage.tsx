@@ -7,12 +7,23 @@ import { EmptyGardenState } from "../components/EmptyGardenState";
 import { GardenSkeleton } from "../components/LoadingSkeleton";
 import { BouquetQuickView } from "../components/BouquetQuickView";
 import { GardenEditView } from "../components/GardenEditView";
+import { GardenUnlockCelebration } from "../components/GardenUnlockCelebration";
 import { useGarden } from "../store/GardenProvider";
 import { useGardenEditMode } from "../hooks/useGardenEditMode";
 
 export function GardenPage() {
-  const { loading, profile, bouquets, gardenAreas, totalCount, speciesCount, toggleFavorite, getBouquet } =
-    useGarden();
+  const {
+    loading,
+    profile,
+    bouquets,
+    gardenAreas,
+    totalCount,
+    speciesCount,
+    toggleFavorite,
+    getBouquet,
+    newlyUnlockedArea,
+    dismissUnlockNotice,
+  } = useGarden();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const gardenEdit = useGardenEditMode();
@@ -96,6 +107,8 @@ export function GardenPage() {
         }}
         onToggleFavorite={() => quickViewId && toggleFavorite(quickViewId)}
       />
+
+      <GardenUnlockCelebration area={newlyUnlockedArea} onClose={dismissUnlockNotice} />
     </div>
   );
 }

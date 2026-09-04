@@ -1,15 +1,17 @@
 import { useRef, useState } from "react";
 import { GardenBackdrop } from "./GardenBackdrop";
 import { BouquetFrame } from "./BouquetFrame";
-import { SLOTS_PER_AREA } from "../lib/gardenLayout";
+import { slotsForTheme } from "../lib/gardenLayout";
 import { useLanguage } from "../i18n/LanguageProvider";
 import type { BouquetWithFlowers, GardenPlacement } from "../types";
+import type { GardenTheme } from "../lib/gardenLayout";
 
 interface GardenEditCanvasProps {
   /** Placements for every OTHER bouquet already in this area (never includes the target). */
   otherPlacements: GardenPlacement[];
   bouquetsById: Map<string, BouquetWithFlowers>;
   targetBouquet: BouquetWithFlowers;
+  theme?: GardenTheme | string;
   /** Current draft slot for the target bouquet, or null if not placed yet (tray mode). */
   draftSlotId: string | null;
   onDraftChange: (slotId: string) => void;
@@ -25,6 +27,7 @@ export function GardenEditCanvas({
   otherPlacements,
   bouquetsById,
   targetBouquet,
+  theme = "garden",
   draftSlotId,
   onDraftChange,
   onConflict,
@@ -35,6 +38,7 @@ export function GardenEditCanvas({
   const [ghostPos, setGhostPos] = useState<{ x: number; y: number } | null>(null);
   const [hoveredSlotId, setHoveredSlotId] = useState<string | null>(null);
   const dragOriginRef = useRef<{ pointerId: number } | null>(null);
+  const slots = slotsForTheme(theme);
 
   const occupiedBySlot = new Map(otherPlacements.map((p) => [p.slotId, p.bouquetId]));
 
@@ -45,7 +49,7 @@ export function GardenEditCanvas({
     const xPct = ((clientX - rect.left) / rect.width) * 100;
     const yPct = ((clientY - rect.top) / rect.height) * 100;
     let nearest: { id: string; dist: number } | null = null;
-    for (const slot of SLOTS_PER_AREA) {
+    for (const slot of slots) {
       const dx = slot.xPct - xPct;
       const dy = slot.yPct - yPct;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -129,8 +133,8 @@ export function GardenEditCanvas({
         ref={canvasRef}
         className="relative aspect-[572/1024] w-full touch-none select-none overflow-hidden rounded-[32px] border border-[var(--color-line)] bg-[var(--color-primary)]"
       >
-        <GardenBackdrop />
-        {SLOTS_PER_AREA.map((slot) => {
+        <GardenBackdrop theme={theme} />
+        {slots.map((slot) => {
           const occupantId = occupiedBySlot.get(slot.id);
           const occupantBouquet = occupantId ? bouquetsById.get(occupantId) : undefined;
           const isTargetHere = slot.id === draftSlotId;

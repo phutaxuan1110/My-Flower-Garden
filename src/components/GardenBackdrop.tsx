@@ -1,4 +1,6 @@
 import gardenImage from "../assets/garden/my-flower-garden-empty.png";
+import riverImage from "../assets/garden/my-flower-garden-river.png";
+import type { GardenTheme } from "../lib/gardenLayout";
 
 /**
  * The garden's illustrated background. Rendered as a real <img> (not a CSS
@@ -6,10 +8,11 @@ import gardenImage from "../assets/garden/my-flower-garden-empty.png";
  * with object-fit; imported through Vite so it's bundled as a hashed,
  * cacheable asset rather than inlined as base64.
  */
-export function GardenBackdrop() {
+export function GardenBackdrop({ theme = "garden" }: { theme?: GardenTheme | string }) {
+  const src = theme === "river" ? riverImage : gardenImage;
   return (
     <img
-      src={gardenImage}
+      src={src}
       alt=""
       aria-hidden="true"
       className="absolute inset-0 h-full w-full select-none object-contain"
