@@ -16,6 +16,11 @@ interface GardenUnlockGateProps {
   onOpenBouquet: (bouquetId: string) => void;
   /** Called once the gate has fully faded out and the area is marked opened. */
   onUnlocked: () => void;
+  /** Forwarded straight to the GardenCanvas sitting under the gate art, so
+      an area that's ambient-animated once opened (garden or river order 0/1)
+      already shows that animation faintly through/behind the gate rather
+      than only starting once the person taps "Mở khoá". */
+  ambientAnimation?: boolean;
 }
 
 /**
@@ -33,6 +38,7 @@ export function GardenUnlockGate({
   bouquetsById,
   onOpenBouquet,
   onUnlocked,
+  ambientAnimation = false,
 }: GardenUnlockGateProps) {
   const { t } = useLanguage();
   const [revealed, setRevealed] = useState(false);
@@ -53,6 +59,7 @@ export function GardenUnlockGate({
         bouquetsById={bouquetsById}
         theme={theme}
         onOpenBouquet={onOpenBouquet}
+        ambientAnimation={ambientAnimation}
       />
 
       <AnimatePresence>

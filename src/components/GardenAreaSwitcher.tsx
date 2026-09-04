@@ -91,6 +91,7 @@ export function GardenAreaSwitcher({
                 bouquetsById={bouquetsById}
                 onOpenBouquet={onOpenBouquet}
                 onUnlocked={() => {}}
+                ambientAnimation={area.order === 0 || area.order === 1}
               />
             ) : (
               <div className="relative">
