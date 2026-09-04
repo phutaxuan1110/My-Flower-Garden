@@ -187,6 +187,7 @@ export function SharedGardenPage() {
                         placements={placements.filter((placement) => placement.gardenAreaId === area.id)}
                         bouquetsById={bouquetsById}
                         theme={area.theme}
+                        ambientAnimation={area.order === 0}
                         onOpenBouquet={openBouquet}
                       />
                     </section>

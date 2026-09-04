@@ -87,6 +87,7 @@ export function GardenAreaSwitcher({
                 placements={placements.filter((p) => p.gardenAreaId === area.id)}
                 bouquetsById={bouquetsById}
                 theme={area.theme}
+                ambientAnimation={area.order === 0}
                 onOpenBouquet={onOpenBouquet}
               />
             )}

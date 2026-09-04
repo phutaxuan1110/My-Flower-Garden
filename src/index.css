@@ -218,3 +218,99 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* First-garden ambient layer. The illustration itself never moves; only a
+   handful of lightweight SVG accents animate, at deliberately low contrast. */
+.garden-ambient {
+  color: rgba(255, 255, 241, 0.82);
+  contain: strict;
+}
+
+.garden-ambient[data-active="false"] * {
+  animation-play-state: paused !important;
+}
+
+.garden-ambient__plant {
+  stroke: rgba(92, 116, 76, 0.48);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+
+.garden-ambient__plant--1 { animation: garden-sway-a 7.8s -2.1s ease-in-out infinite; }
+.garden-ambient__plant--2 { animation: garden-sway-b 9.2s -5.4s ease-in-out infinite; }
+.garden-ambient__plant--3 { animation: garden-sway-b 8.6s -1.3s ease-in-out infinite; }
+.garden-ambient__plant--4 { animation: garden-sway-a 10.1s -6.7s ease-in-out infinite; }
+
+.garden-ambient__sparkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: opacity, transform;
+}
+
+.garden-ambient__sparkle--1 { animation: garden-glimmer-a 5.7s -1.2s ease-in-out infinite; }
+.garden-ambient__sparkle--2 { animation: garden-glimmer-b 7.1s -4.4s ease-in-out infinite; }
+.garden-ambient__sparkle--3 { animation: garden-glimmer-a 6.4s -3.1s ease-in-out infinite; }
+.garden-ambient__sparkle--4 { animation: garden-glimmer-b 5.2s -0.8s ease-in-out infinite; }
+.garden-ambient__sparkle--5 { animation: garden-glimmer-a 7.6s -5.9s ease-in-out infinite; }
+.garden-ambient__sparkle--6 { animation: garden-glimmer-b 6.8s -2.5s ease-in-out infinite; }
+
+.garden-ambient__wind-line {
+  stroke: rgba(255, 255, 255, 0.48);
+  stroke-width: 1.2;
+  stroke-dasharray: 8 170;
+  opacity: 0;
+  will-change: opacity, stroke-dashoffset;
+}
+
+.garden-ambient__wind-line--1 { animation: garden-wind 11.5s -3s ease-in-out infinite; }
+.garden-ambient__wind-line--2 { animation: garden-wind 14s -9s ease-in-out infinite; }
+
+@keyframes garden-sway-a {
+  0%, 100% { transform: rotate(-0.35deg); }
+  38% { transform: rotate(1.15deg); }
+  72% { transform: rotate(-0.75deg); }
+}
+
+@keyframes garden-sway-b {
+  0%, 100% { transform: rotate(0.25deg); }
+  44% { transform: rotate(-1.3deg); }
+  76% { transform: rotate(0.7deg); }
+}
+
+@keyframes garden-glimmer-a {
+  0%, 18%, 100% { opacity: 0.24; transform: translateY(1px) scale(0.92); }
+  52% { opacity: 0.62; transform: translateY(-2px) scale(1.04); }
+  74% { opacity: 0.34; transform: translateY(0) scale(0.97); }
+}
+
+@keyframes garden-glimmer-b {
+  0%, 28%, 100% { opacity: 0.2; transform: translateY(0) scale(0.9); }
+  61% { opacity: 0.55; transform: translateY(-3px) scale(1.03); }
+}
+
+@keyframes garden-wind {
+  0%, 58%, 100% { opacity: 0; stroke-dashoffset: 40; }
+  66% { opacity: 0.08; }
+  76% { opacity: 0.2; }
+  88% { opacity: 0.06; stroke-dashoffset: -190; }
+  94% { opacity: 0; stroke-dashoffset: -220; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .garden-ambient__plant,
+  .garden-ambient__wind-line {
+    animation: none !important;
+  }
+
+  .garden-ambient__sparkle {
+    animation: none !important;
+    opacity: 0.32;
+    transform: none;
+  }
+
+  .garden-ambient__wind-line {
+    opacity: 0;
+  }
+}

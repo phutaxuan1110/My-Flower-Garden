@@ -11,6 +11,7 @@ interface GardenCanvasProps {
   selectableSlotId?: string | null;
   onSelectSlot?: (slotId: string) => void;
   onOpenBouquet?: (bouquetId: string) => void;
+  ambientAnimation?: boolean;
 }
 
 export function GardenCanvas({
@@ -20,11 +21,12 @@ export function GardenCanvas({
   selectableSlotId,
   onSelectSlot,
   onOpenBouquet,
+  ambientAnimation = false,
 }: GardenCanvasProps) {
   const slots = slotsForTheme(theme);
   return (
     <div className="relative aspect-[572/1024] w-full overflow-hidden rounded-[32px] border border-[var(--color-line)] bg-[var(--color-primary)]">
-      <GardenBackdrop theme={theme} />
+      <GardenBackdrop theme={theme} ambientAnimation={ambientAnimation} />
       {slots.map((slot) => {
         const placement = placements.find((p) => p.slotId === slot.id);
         const bouquet = placement ? bouquetsById.get(placement.bouquetId) : undefined;
