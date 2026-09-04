@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GardenCanvas } from "./GardenCanvas";
 import { LockedGardenArea } from "./LockedGardenArea";
 import { GardenUnlockGate } from "./GardenUnlockGate";
@@ -11,9 +11,19 @@ interface GardenAreaSwitcherProps {
   placements: GardenPlacement[];
   bouquetsById: Map<string, BouquetWithFlowers>;
   onOpenBouquet: (bouquetId: string) => void;
+  /** When set, smooth-scrolls to this area's page once (e.g. after tapping "Đến khu vườn" on the unlock celebration). */
+  focusAreaId?: string | null;
+  onFocusHandled?: () => void;
 }
 
-export function GardenAreaSwitcher({ areas, placements, bouquetsById, onOpenBouquet }: GardenAreaSwitcherProps) {
+export function GardenAreaSwitcher({
+  areas,
+  placements,
+  bouquetsById,
+  onOpenBouquet,
+  focusAreaId,
+  onFocusHandled,
+}: GardenAreaSwitcherProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const openedAreaIds = useOpenedAreaIds();
@@ -28,6 +38,20 @@ export function GardenAreaSwitcher({ areas, placements, bouquetsById, onOpenBouq
     const index = Math.round(el.scrollLeft / (el.clientWidth + 16));
     setActiveIndex(index);
   }
+
+  useEffect(() => {
+    if (!focusAreaId) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+    const index = displayAreas.findIndex((a) => a.id === focusAreaId);
+    if (index < 0) return;
+    el.scrollTo({ left: index * (el.clientWidth + 16), behavior: "smooth" });
+    setActiveIndex(index);
+    onFocusHandled?.();
+    // Only ever react to a *new* focus request, not every time
+    // `displayAreas` is recomputed (which happens on nearly every render).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusAreaId]);
 
   return (
     <div className="mt-4">

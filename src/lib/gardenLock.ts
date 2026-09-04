@@ -99,9 +99,18 @@ export function buildDisplayAreas(
   }));
 
   const last = unlocked[unlocked.length - 1];
-  const lastIsFull = last ? isAreaFull(last, placements) : false;
 
-  if (!last || !lastIsFull) {
+  // Always compute exactly one trailing entry representing "what's next" —
+  // previously this was skipped whenever `last` was already full, on the
+  // assumption that a real next area would already be sitting in `unlocked`
+  // by then. That assumption broke the moment manual-unlock gating was
+  // added above: the loop now deliberately stops *before* pushing an
+  // unopened next area into `unlocked`, so when the last included area is
+  // full, the trailing slot is exactly what should render the "ready to
+  // unlock" gate — skipping it here made the just-completed area's unlock
+  // gate never appear at all (only fixing itself once something else, like
+  // deleting a bouquet, forced a recompute where `last` briefly wasn't full).
+  {
     const nextOrder = last ? last.order + 1 : 0;
     const existingNext = sorted.find((area) => area.order === nextOrder);
     result.push({

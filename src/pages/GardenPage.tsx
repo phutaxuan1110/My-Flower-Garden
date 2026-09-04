@@ -10,6 +10,7 @@ import { GardenEditView } from "../components/GardenEditView";
 import { GardenUnlockCelebration } from "../components/GardenUnlockCelebration";
 import { useGarden } from "../store/GardenProvider";
 import { useGardenEditMode } from "../hooks/useGardenEditMode";
+import { useChromeVisibility } from "../hooks/useChromeVisibility";
 
 export function GardenPage() {
   const {
@@ -27,6 +28,7 @@ export function GardenPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const gardenEdit = useGardenEditMode();
+  const { isChromeHidden } = useChromeVisibility();
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
 
   const bouquetsById = useMemo(() => new Map(bouquets.map((b) => [b.id, b])), [bouquets]);
@@ -46,6 +48,39 @@ export function GardenPage() {
   // param, but it no longer gates the *first* paint.
   const urlEditBouquetId = searchParams.get("editBouquet");
   const isEnteringEditMode = gardenEdit.isActive || Boolean(urlEditBouquetId);
+
+  // The unlock-celebration popup should only ever appear once the person is
+  // back on this plain garden view with nothing else open — not stacked on
+  // top of the add-bouquet sheet's own "saved!" screen, not while in Garden
+  // Edit Mode. `newlyUnlockedArea` flips true the instant the area is
+  // filled (still deep inside the add flow), so showing it is *latched*
+  // behind a one-way effect rather than a live `!isAnythingOpen` check:
+  // once the celebration itself is shown it also asks to hide chrome (like
+  // every other popup), which would otherwise immediately flip the "is
+  // anything open" check back to true and hide the popup that very same
+  // render — a live check would fight itself in an infinite loop.
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [focusAreaId, setFocusAreaId] = useState<string | null>(null);
+  const anyOtherOverlayOpen = isChromeHidden || isEnteringEditMode;
+
+  useEffect(() => {
+    if (newlyUnlockedArea && !anyOtherOverlayOpen) {
+      setShowCelebration(true);
+    }
+    if (!newlyUnlockedArea) {
+      setShowCelebration(false);
+    }
+  }, [newlyUnlockedArea, anyOtherOverlayOpen]);
+
+  function handleCelebrationClose() {
+    const unlockedAreaId = newlyUnlockedArea?.id ?? null;
+    setShowCelebration(false);
+    dismissUnlockNotice();
+    // Scroll the garden switcher over to the newly-ready secret garden so
+    // "Đến khu vườn" actually takes the person there instead of just
+    // closing the popup and leaving them wherever they happened to be.
+    if (unlockedAreaId) setFocusAreaId(unlockedAreaId);
+  }
 
   useEffect(() => {
     if (urlEditBouquetId && !gardenEdit.isActive) {
@@ -95,6 +130,8 @@ export function GardenPage() {
           placements={placements}
           bouquetsById={bouquetsById}
           onOpenBouquet={setQuickViewId}
+          focusAreaId={focusAreaId}
+          onFocusHandled={() => setFocusAreaId(null)}
         />
       )}
 
@@ -108,7 +145,7 @@ export function GardenPage() {
         onToggleFavorite={() => quickViewId && toggleFavorite(quickViewId)}
       />
 
-      <GardenUnlockCelebration area={newlyUnlockedArea} onClose={dismissUnlockNotice} />
+      <GardenUnlockCelebration area={showCelebration ? newlyUnlockedArea : null} onClose={handleCelebrationClose} />
     </div>
   );
 }
