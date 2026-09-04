@@ -18,6 +18,7 @@ import { flowerAIService } from "../lib/aiService";
 import { makeId } from "../lib/id";
 import { useGarden } from "../store/GardenProvider";
 import { useToast } from "../hooks/useToast";
+import { useHideChromeWhen } from "../hooks/useChromeVisibility";
 import { useLanguage } from "../i18n/LanguageProvider";
 import type { TranslationKey } from "../i18n/translations";
 import type { DetectedFlower } from "../types";
@@ -43,6 +44,11 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
   const { show } = useToast();
   const { t, language } = useLanguage();
   const navigate = useNavigate();
+  // This sheet only ever mounts while the add-bouquet flow is open (see
+  // AddBouquetHost's AnimatePresence), so its mere presence — through every
+  // internal step (camera, AI review, memory form, placement picker) — is
+  // reason enough to hide the bottom nav for the whole flow.
+  useHideChromeWhen(true, "add-bouquet-sheet");
 
   const [step, setStep] = useState<Step>("source");
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);

@@ -6,6 +6,7 @@ import { GardenProvider, useGarden } from "./store/GardenProvider";
 import { ToastProvider } from "./hooks/useToast";
 import { AddFlowProvider, useAddFlow } from "./hooks/useAddFlow";
 import { GardenEditModeProvider } from "./hooks/useGardenEditMode";
+import { ChromeVisibilityProvider } from "./hooks/useChromeVisibility";
 import { LanguageProvider } from "./i18n/LanguageProvider";
 import { MobileAppShell } from "./components/MobileAppShell";
 import { AddBouquetSheet } from "./components/AddBouquetSheet";
@@ -82,7 +83,9 @@ function RootGate() {
     <AddFlowProvider>
       <GardenEditModeProvider>
         <GardenProvider>
-          <AuthenticatedApp />
+          <ChromeVisibilityProvider>
+            <AuthenticatedApp />
+          </ChromeVisibilityProvider>
         </GardenProvider>
       </GardenEditModeProvider>
     </AddFlowProvider>

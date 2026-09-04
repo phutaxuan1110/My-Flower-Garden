@@ -1,5 +1,7 @@
+import { useId } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLanguage } from "../i18n/LanguageProvider";
+import { useHideChromeWhen } from "../hooks/useChromeVisibility";
 
 interface ConfirmationDialogProps {
   open: boolean;
@@ -23,6 +25,11 @@ export function ConfirmationDialog({
   onCancel,
 }: ConfirmationDialogProps) {
   const { t } = useLanguage();
+  // Unique per mounted instance (not a shared literal string) so two
+  // dialogs open at once — or one closing while another opens — never
+  // release a reason the other one still needs.
+  const chromeKey = useId();
+  useHideChromeWhen(open, `confirmation-dialog-${chromeKey}`);
   const resolvedConfirm = confirmLabel ?? t("common.confirm");
   const resolvedCancel = cancelLabel ?? t("common.cancel");
   return (

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { BottomNavigation } from "./BottomNavigation";
 import { useGardenEditMode } from "../hooks/useGardenEditMode";
+import { useChromeVisibility } from "../hooks/useChromeVisibility";
 
 /**
  * Root layout shell.
@@ -48,14 +49,39 @@ import { useGardenEditMode } from "../hooks/useGardenEditMode";
  * overscan strip below the nav, so the home-indicator region remains covered
  * even while WebKit is reconciling the layout and visual viewports. Desktop
  * keeps the nav inside the centered app frame.
+ *
+ * Root cause of "the bottom nav covers quick-view / add-bouquet content
+ * that should be above it" (z-[60]/z-50 overlays visually losing to the
+ * nav's z-40): portaling the mobile nav to `document.body` above fixed the
+ * clipping bug, but it also moved the nav *outside* this shell's own DOM
+ * subtree. This shell's outer wrapper is itself `position: fixed`, which
+ * unconditionally opens its own stacking context — every z-index used
+ * anywhere inside the app (the quick-view sheet's z-[60], the add-bouquet
+ * sheet's z-50, popups at z-[70]/z-[80]) is only ever compared *within*
+ * that trapped context. The portaled nav sits one level up, a sibling of
+ * that entire wrapper at the document body level, with its own explicit
+ * z-40 — so it now beats the *whole app*, regardless of what z-index any
+ * modal inside the app claims, because that modal's z-index never gets to
+ * compete at the body level at all.
+ *
+ * No z-index arrangement can fix that from inside the trapped context, so
+ * the fix doesn't try to win a stacking fight — it removes the nav from the
+ * DOM entirely whenever something needs the full screen. `hideChrome` below
+ * now also reads `isChromeHidden` from ChromeVisibilityProvider, a shared
+ * registry that BouquetQuickView, AddBouquetSheet, GardenUnlockCelebration,
+ * and ConfirmationDialog each register themselves into while open — so
+ * every current (and future) full-screen or bottom-anchored overlay is
+ * guaranteed never to have the nav painted over any part of it, independent
+ * of any z-index value.
  */
 export function MobileAppShell({ children }: { children: React.ReactNode }) {
   const { isActive: isGardenEditActive } = useGardenEditMode();
+  const { isChromeHidden } = useChromeVisibility();
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   const isEnteringGardenEdit = searchParams.has("editBouquet");
   const isBouquetDetail = /^\/bouquet\/[^/]+\/?$/.test(pathname);
-  const hideChrome = isGardenEditActive || isEnteringGardenEdit || isBouquetDetail;
+  const hideChrome = isGardenEditActive || isEnteringGardenEdit || isBouquetDetail || isChromeHidden;
 
   return (
     <div className="full-bleed-height fixed inset-0 w-full overflow-hidden bg-gradient-to-b from-[var(--color-blush)] to-[var(--color-bg)] md:static md:inset-auto md:h-auto md:min-h-dvh md:w-auto md:overflow-visible md:flex md:items-center md:justify-center md:py-10">

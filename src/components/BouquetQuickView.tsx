@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Heart, ArrowRight } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageProvider";
+import { useHideChromeWhen } from "../hooks/useChromeVisibility";
 import type { BouquetWithFlowers } from "../types";
 
 interface BouquetQuickViewProps {
@@ -12,6 +13,7 @@ interface BouquetQuickViewProps {
 
 export function BouquetQuickView({ bouquet, onClose, onOpenDetail, onToggleFavorite }: BouquetQuickViewProps) {
   const { t } = useLanguage();
+  useHideChromeWhen(Boolean(bouquet), "bouquet-quick-view");
   return (
     <AnimatePresence>
       {bouquet && (

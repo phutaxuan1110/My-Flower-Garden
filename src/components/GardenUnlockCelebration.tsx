@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { generateAreaName } from "../lib/gardenNaming";
+import { useHideChromeWhen } from "../hooks/useChromeVisibility";
 import type { GardenArea } from "../types";
 
 interface GardenUnlockCelebrationProps {
@@ -17,6 +18,7 @@ interface GardenUnlockCelebrationProps {
  */
 export function GardenUnlockCelebration({ area, onClose }: GardenUnlockCelebrationProps) {
   const { t } = useLanguage();
+  useHideChromeWhen(Boolean(area), "unlock-celebration");
   return (
     <AnimatePresence>
       {area && (
