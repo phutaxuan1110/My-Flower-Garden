@@ -125,13 +125,13 @@
   }
 
   .app-content-padding {
-    /* Was missing a top offset entirely, so on notch / Dynamic Island
-       devices the greeting header (which only adds a fixed 24px via
-       GardenHeader's `pt-6`) sat right under the status bar with no room
-       to clear it — the "dính sát" bug. Add the same safe-area-aware top
-       padding used by `.safe-top` so every tab under this shared content
-       wrapper (Garden, Bộ sưu tập, Yêu thích, Cá nhân) clears the notch. */
-    padding-top: calc(env(safe-area-inset-top) + 12px);
+    /* Extra buffer above the safe-area inset was 12px, which reads as too
+       much empty space under the status bar once the notch itself is
+       already cleared. Trimmed to 4px — still additive on top of
+       env(safe-area-inset-top) (never less than the safe area itself, so
+       it can't creep back up under the status bar/Dynamic Island), just a
+       smaller gap above that. */
+    padding-top: calc(env(safe-area-inset-top) + 4px);
     padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 16px);
   }
 
