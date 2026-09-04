@@ -9,7 +9,11 @@
 
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-const GEMINI_MODEL = "gemini-2.5-flash";
+// Uses the "-latest" alias so this keeps working as Google retires and
+// replaces specific model versions (which happens every few months) —
+// pin to an exact version like "gemini-3.5-flash" only if you need fully
+// deterministic behavior across model upgrades.
+const GEMINI_MODEL = "gemini-flash-latest";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // Mirrors AIRecognitionResultSchema in src/lib/aiService.ts. Gemini's
