@@ -231,17 +231,21 @@
 }
 
 .garden-ambient__plant {
-  stroke: rgba(92, 116, 76, 0.48);
-  stroke-width: 1.5;
+  stroke: rgba(92, 116, 76, 0.62);
+  stroke-width: 1.75;
   transform-box: fill-box;
   transform-origin: 50% 100%;
   will-change: transform;
 }
 
-.garden-ambient__plant--1 { animation: garden-sway-a 7.8s -2.1s ease-in-out infinite; }
-.garden-ambient__plant--2 { animation: garden-sway-b 9.2s -5.4s ease-in-out infinite; }
-.garden-ambient__plant--3 { animation: garden-sway-b 8.6s -1.3s ease-in-out infinite; }
-.garden-ambient__plant--4 { animation: garden-sway-a 10.1s -6.7s ease-in-out infinite; }
+/* Amplified from the original 1-2deg / 5-10s pass, which turned out to be
+   imperceptible at a glance on a busy illustrated background. Durations
+   shortened and swing widened so the sway reads clearly within a few
+   seconds of looking, while staying well short of anything cartoonish. */
+.garden-ambient__plant--1 { animation: garden-sway-a 5.2s -1.4s ease-in-out infinite; }
+.garden-ambient__plant--2 { animation: garden-sway-b 6.1s -3.6s ease-in-out infinite; }
+.garden-ambient__plant--3 { animation: garden-sway-b 5.7s -0.9s ease-in-out infinite; }
+.garden-ambient__plant--4 { animation: garden-sway-a 6.7s -4.5s ease-in-out infinite; }
 
 .garden-ambient__sparkle {
   transform-box: fill-box;
@@ -249,52 +253,52 @@
   will-change: opacity, transform;
 }
 
-.garden-ambient__sparkle--1 { animation: garden-glimmer-a 5.7s -1.2s ease-in-out infinite; }
-.garden-ambient__sparkle--2 { animation: garden-glimmer-b 7.1s -4.4s ease-in-out infinite; }
-.garden-ambient__sparkle--3 { animation: garden-glimmer-a 6.4s -3.1s ease-in-out infinite; }
-.garden-ambient__sparkle--4 { animation: garden-glimmer-b 5.2s -0.8s ease-in-out infinite; }
-.garden-ambient__sparkle--5 { animation: garden-glimmer-a 7.6s -5.9s ease-in-out infinite; }
-.garden-ambient__sparkle--6 { animation: garden-glimmer-b 6.8s -2.5s ease-in-out infinite; }
+.garden-ambient__sparkle--1 { animation: garden-glimmer-a 4.2s -0.9s ease-in-out infinite; }
+.garden-ambient__sparkle--2 { animation: garden-glimmer-b 5.3s -3.2s ease-in-out infinite; }
+.garden-ambient__sparkle--3 { animation: garden-glimmer-a 4.8s -2.3s ease-in-out infinite; }
+.garden-ambient__sparkle--4 { animation: garden-glimmer-b 3.9s -0.6s ease-in-out infinite; }
+.garden-ambient__sparkle--5 { animation: garden-glimmer-a 5.6s -4.3s ease-in-out infinite; }
+.garden-ambient__sparkle--6 { animation: garden-glimmer-b 5s -1.8s ease-in-out infinite; }
 
 .garden-ambient__wind-line {
-  stroke: rgba(255, 255, 255, 0.48);
-  stroke-width: 1.2;
-  stroke-dasharray: 8 170;
+  stroke: rgba(255, 255, 255, 0.65);
+  stroke-width: 1.4;
+  stroke-dasharray: 10 170;
   opacity: 0;
   will-change: opacity, stroke-dashoffset;
 }
 
-.garden-ambient__wind-line--1 { animation: garden-wind 11.5s -3s ease-in-out infinite; }
-.garden-ambient__wind-line--2 { animation: garden-wind 14s -9s ease-in-out infinite; }
+.garden-ambient__wind-line--1 { animation: garden-wind 8.5s -2.2s ease-in-out infinite; }
+.garden-ambient__wind-line--2 { animation: garden-wind 10.5s -6.5s ease-in-out infinite; }
 
 @keyframes garden-sway-a {
-  0%, 100% { transform: rotate(-0.35deg); }
-  38% { transform: rotate(1.15deg); }
-  72% { transform: rotate(-0.75deg); }
+  0%, 100% { transform: rotate(-1deg); }
+  38% { transform: rotate(2.6deg); }
+  72% { transform: rotate(-1.6deg); }
 }
 
 @keyframes garden-sway-b {
-  0%, 100% { transform: rotate(0.25deg); }
-  44% { transform: rotate(-1.3deg); }
-  76% { transform: rotate(0.7deg); }
+  0%, 100% { transform: rotate(0.8deg); }
+  44% { transform: rotate(-2.8deg); }
+  76% { transform: rotate(1.5deg); }
 }
 
 @keyframes garden-glimmer-a {
-  0%, 18%, 100% { opacity: 0.24; transform: translateY(1px) scale(0.92); }
-  52% { opacity: 0.62; transform: translateY(-2px) scale(1.04); }
-  74% { opacity: 0.34; transform: translateY(0) scale(0.97); }
+  0%, 18%, 100% { opacity: 0.18; transform: translateY(2px) scale(0.85); }
+  52% { opacity: 0.85; transform: translateY(-4px) scale(1.15); }
+  74% { opacity: 0.4; transform: translateY(0) scale(0.97); }
 }
 
 @keyframes garden-glimmer-b {
-  0%, 28%, 100% { opacity: 0.2; transform: translateY(0) scale(0.9); }
-  61% { opacity: 0.55; transform: translateY(-3px) scale(1.03); }
+  0%, 28%, 100% { opacity: 0.14; transform: translateY(0) scale(0.82); }
+  61% { opacity: 0.78; transform: translateY(-5px) scale(1.12); }
 }
 
 @keyframes garden-wind {
-  0%, 58%, 100% { opacity: 0; stroke-dashoffset: 40; }
-  66% { opacity: 0.08; }
-  76% { opacity: 0.2; }
-  88% { opacity: 0.06; stroke-dashoffset: -190; }
+  0%, 50%, 100% { opacity: 0; stroke-dashoffset: 40; }
+  60% { opacity: 0.16; }
+  72% { opacity: 0.35; }
+  86% { opacity: 0.1; stroke-dashoffset: -190; }
   94% { opacity: 0; stroke-dashoffset: -220; }
 }
 

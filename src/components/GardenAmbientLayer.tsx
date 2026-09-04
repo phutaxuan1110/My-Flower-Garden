@@ -73,12 +73,12 @@ export function GardenAmbientLayer() {
         </g>
 
         <g className="garden-ambient__sparkles" fill="currentColor">
-          <circle className="garden-ambient__sparkle garden-ambient__sparkle--1" cx="66" cy="56" r="2.2" />
-          <path className="garden-ambient__sparkle garden-ambient__sparkle--2" d="M166 157 v18 M157 166 h18" />
-          <circle className="garden-ambient__sparkle garden-ambient__sparkle--3" cx="474" cy="118" r="2.6" />
-          <circle className="garden-ambient__sparkle garden-ambient__sparkle--4" cx="510" cy="190" r="1.8" />
-          <path className="garden-ambient__sparkle garden-ambient__sparkle--5" d="M132 236 v12 M126 242 h12" />
-          <circle className="garden-ambient__sparkle garden-ambient__sparkle--6" cx="446" cy="302" r="1.7" />
+          <circle className="garden-ambient__sparkle garden-ambient__sparkle--1" cx="66" cy="56" r="3.1" />
+          <path className="garden-ambient__sparkle garden-ambient__sparkle--2" d="M166 155 v22 M155 166 h22" />
+          <circle className="garden-ambient__sparkle garden-ambient__sparkle--3" cx="474" cy="118" r="3.6" />
+          <circle className="garden-ambient__sparkle garden-ambient__sparkle--4" cx="510" cy="190" r="2.5" />
+          <path className="garden-ambient__sparkle garden-ambient__sparkle--5" d="M132 234 v16 M124 242 h16" />
+          <circle className="garden-ambient__sparkle garden-ambient__sparkle--6" cx="446" cy="302" r="2.4" />
         </g>
 
         <g className="garden-ambient__wind" fill="none" strokeLinecap="round">
