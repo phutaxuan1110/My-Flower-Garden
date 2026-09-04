@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Globe, LogOut, Sprout, User } from "lucide-react";
+import { Globe, LogOut, RotateCcw, User } from "lucide-react";
 import { useGarden } from "../store/GardenProvider";
 import { useAuth } from "../store/AuthProvider";
 import { useToast } from "../hooks/useToast";
@@ -9,7 +9,7 @@ import { ConfirmationDialog } from "../components/ConfirmationDialog";
 import { setOnboardingSeen } from "../lib/onboardingFlag";
 
 export function ProfilePage() {
-  const { profile, updateProfile, totalCount } = useGarden();
+  const { profile, updateProfile, totalCount, resetGarden } = useGarden();
   const { signOut } = useAuth();
   const { show } = useToast();
   const { t, language, setLanguage } = useLanguage();
@@ -17,6 +17,8 @@ export function ProfilePage() {
   const [displayName, setDisplayName] = useState(profile?.displayName ?? "");
   const [gardenName, setGardenName] = useState(profile?.gardenName ?? "");
   const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   async function handleSave() {
     await updateProfile({ displayName: displayName.trim() || "Friend", gardenName: gardenName.trim() || "My Flower Garden" });
@@ -28,9 +30,17 @@ export function ProfilePage() {
     await signOut();
   }
 
-  function replayOnboarding() {
-    setOnboardingSeen(false);
-    navigate("/onboarding");
+  async function handleReset() {
+    setConfirmReset(false);
+    setIsResetting(true);
+    try {
+      await resetGarden();
+      setOnboardingSeen(false);
+      navigate("/onboarding", { replace: true });
+    } catch {
+      setIsResetting(false);
+      show(t("profile.resetError"), "error");
+    }
   }
 
   return (
@@ -114,10 +124,11 @@ export function ProfilePage() {
       <div className="mt-8 space-y-2">
         <button
           type="button"
-          onClick={replayOnboarding}
-          className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-[var(--color-line)] text-sm font-medium text-[var(--color-ink)]"
+          onClick={() => setConfirmReset(true)}
+          disabled={isResetting}
+          className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-[var(--color-line)] text-sm font-medium text-[var(--color-ink)] disabled:opacity-50"
         >
-          <Sprout size={15} /> {t("profile.replayOnboarding")}
+          <RotateCcw size={15} /> {isResetting ? t("profile.resetting") : t("profile.resetData")}
         </button>
         <button
           type="button"
@@ -128,8 +139,6 @@ export function ProfilePage() {
         </button>
       </div>
 
-      <p className="mt-8 text-center text-xs leading-relaxed text-[var(--color-muted)]">{t("profile.footerNote")}</p>
-
       <ConfirmationDialog
         open={confirmSignOut}
         title={t("profile.signOutConfirmTitle")}
@@ -137,6 +146,16 @@ export function ProfilePage() {
         confirmLabel={t("profile.signOut")}
         onConfirm={handleSignOut}
         onCancel={() => setConfirmSignOut(false)}
+      />
+
+      <ConfirmationDialog
+        open={confirmReset}
+        title={t("profile.resetConfirmTitle")}
+        description={t("profile.resetConfirmBody")}
+        confirmLabel={t("profile.resetData")}
+        destructive
+        onConfirm={handleReset}
+        onCancel={() => setConfirmReset(false)}
       />
     </div>
   );

@@ -57,3 +57,14 @@ function subscribe(listener: () => void): () => void {
 export function useOpenedAreaIds(): Set<string> {
   return useSyncExternalStore(subscribe, getOpenedAreaIds, getOpenedAreaIds);
 }
+
+/** Clears every "opened" flag. Used by the "reset data" flow. */
+export function clearOpenedAreaIds(): void {
+  cachedIds = new Set();
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    // ignore
+  }
+  for (const listener of listeners) listener();
+}

@@ -4,7 +4,7 @@ import { SLOTS_PER_AREA } from "../lib/gardenLayout";
 import { themeForAreaOrder } from "../lib/gardenLayout";
 import { generateAreaName } from "../lib/gardenNaming";
 import { isAreaFull } from "../lib/gardenLock";
-import { isAreaOpened } from "../lib/openedAreasFlag";
+import { isAreaOpened, clearOpenedAreaIds } from "../lib/openedAreasFlag";
 import type {
   Bouquet,
   BouquetFlower,
@@ -61,6 +61,8 @@ interface GardenContextValue {
   swapPlacements: (bouquetIdA: string, bouquetIdB: string) => Promise<void>;
   removePlacement: (bouquetId: string) => Promise<void>;
   updateProfile: (patch: Partial<Pick<UserProfile, "displayName" | "gardenName">>) => Promise<void>;
+  /** Wipes all garden data (bouquets, areas, placements, photos) and resets the profile. Irreversible. */
+  resetGarden: () => Promise<void>;
   /** The area that just got unlocked by completing the one before it, or null. */
   newlyUnlockedArea: GardenArea | null;
   dismissUnlockNotice: () => void;
@@ -275,6 +277,17 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const resetGarden = useCallback(async () => {
+    await gardenRepository.resetGarden();
+    clearOpenedAreaIds();
+    setRawBouquets([]);
+    setFlowers([]);
+    setGardenAreas([]);
+    setPlacements([]);
+    setNewlyUnlockedArea(null);
+    await loadAll();
+  }, [loadAll]);
+
   const value: GardenContextValue = {
     loading,
     profile,
@@ -293,6 +306,7 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
     swapPlacements,
     removePlacement,
     updateProfile,
+    resetGarden,
     newlyUnlockedArea,
     dismissUnlockNotice,
   };

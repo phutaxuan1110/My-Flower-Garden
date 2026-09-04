@@ -506,4 +506,35 @@ export class SupabaseGardenRepository implements GardenRepository {
     const { error } = await supabase.from("garden_placements").delete().eq("bouquet_id", bouquetId);
     if (error) throw error;
   }
+
+  async resetGarden(): Promise<void> {
+    const userId = await getUserId();
+
+    // garden_placements cascades from both bouquets and garden_areas, and
+    // bouquet_flowers cascades from bouquets (see supabase/schema.sql), so
+    // deleting these two tables' rows for this user is enough to clear
+    // everything relational.
+    const { error: bouquetsError } = await supabase.from("bouquets").delete().eq("user_id", userId);
+    if (bouquetsError) throw bouquetsError;
+    const { error: areasError } = await supabase.from("garden_areas").delete().eq("user_id", userId);
+    if (areasError) throw areasError;
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ display_name: "Friend", garden_name: "My Flower Garden", updated_at: nowIso() })
+      .eq("id", userId);
+    if (profileError) throw profileError;
+
+    // Best-effort: also clear the person's uploaded photos from Storage.
+    // Not fatal if this fails (e.g. an already-empty folder) — the rows
+    // above are the part that actually matters for the app to feel reset.
+    try {
+      const { data: files } = await supabase.storage.from(BOUQUET_IMAGE_BUCKET).list(userId);
+      if (files && files.length > 0) {
+        await supabase.storage.from(BOUQUET_IMAGE_BUCKET).remove(files.map((f) => `${userId}/${f.name}`));
+      }
+    } catch {
+      // ignore
+    }
+  }
 }

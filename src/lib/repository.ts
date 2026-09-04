@@ -2,6 +2,7 @@ import { makeId, nowIso } from "./id";
 import { SupabaseGardenRepository } from "./repository.supabase";
 import {
   bouquetImageReference,
+  clearAllBouquetImages,
   deleteBouquetImage,
   isBouquetImageReference,
   readBouquetImage,
@@ -40,6 +41,8 @@ export interface GardenRepository {
 
   listGardenAreas(): Promise<GardenArea[]>;
   createGardenArea(name: string, theme: string, order?: number): Promise<GardenArea>;
+  /** Wipes every bouquet, flower, garden area, placement, and stored photo for the current user, and resets their profile back to defaults. Irreversible. */
+  resetGarden(): Promise<void>;
 
   listPlacements(): Promise<GardenPlacement[]>;
   placeBouquet(args: {
@@ -314,6 +317,17 @@ export class LocalStorageGardenRepository implements GardenRepository {
     const placements = read<GardenPlacement[]>(KEYS.placements, []).filter((p) => p.bouquetId !== bouquetId);
     write(KEYS.placements, placements);
     return tick(undefined, 200);
+  }
+
+  async resetGarden(): Promise<void> {
+    write(KEYS.bouquets, []);
+    write(KEYS.flowers, []);
+    write(KEYS.gardenAreas, []);
+    write(KEYS.placements, []);
+    const profile = this.ensureProfile();
+    write(KEYS.profile, { ...profile, displayName: "Friend", gardenName: "My Flower Garden", updatedAt: nowIso() });
+    await clearAllBouquetImages();
+    return tick(undefined, 300);
   }
 }
 

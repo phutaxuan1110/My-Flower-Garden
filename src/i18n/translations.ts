@@ -76,12 +76,22 @@ const dict = {
   "profile.language": { vi: "Ngôn ngữ", en: "Language" },
   "profile.languageVi": { vi: "Tiếng Việt", en: "Vietnamese" },
   "profile.languageEn": { vi: "Tiếng Anh", en: "English" },
-  "profile.replayOnboarding": { vi: "Xem lại hướng dẫn", en: "Replay onboarding" },
   "profile.signOut": { vi: "Đăng xuất", en: "Sign out" },
   "profile.signOutConfirmTitle": { vi: "Đăng xuất?", en: "Sign out?" },
   "profile.signOutConfirmBody": {
     vi: "Khu vườn của bạn đã được lưu an toàn — bạn có thể đăng nhập lại bất cứ lúc nào để tiếp tục.",
     en: "Your garden is safely saved — you can sign back in anytime to pick up where you left off.",
+  },
+  "profile.resetData": { vi: "Đặt lại dữ liệu", en: "Reset data" },
+  "profile.resetting": { vi: "Đang đặt lại…", en: "Resetting…" },
+  "profile.resetConfirmTitle": { vi: "Đặt lại toàn bộ dữ liệu?", en: "Reset all data?" },
+  "profile.resetConfirmBody": {
+    vi: "Toàn bộ bó hoa, khu vườn và ảnh đã lưu sẽ bị xoá vĩnh viễn và bạn sẽ bắt đầu lại từ đầu. Không thể hoàn tác.",
+    en: "Every bouquet, garden, and saved photo will be permanently deleted and you'll start over from scratch. This can't be undone.",
+  },
+  "profile.resetError": {
+    vi: "Không thể đặt lại dữ liệu. Vui lòng thử lại.",
+    en: "Couldn't reset your data. Please try again.",
   },
 
   // Auth (login/sign up)
@@ -102,10 +112,6 @@ const dict = {
     en: "Check your email to confirm your account, then come back and sign in.",
   },
   "auth.passwordHint": { vi: "Ít nhất 6 ký tự", en: "At least 6 characters" },
-  "profile.footerNote": {
-    vi: "Bản demo này chỉ lưu khu vườn trên thiết bị của bạn. Ảnh, bó hoa và vị trí được lưu cục bộ và vẫn còn sau khi bạn tải lại trang.",
-    en: "This demo stores your garden on this device only. Photos, bouquets and placements are saved locally and will still be here after you refresh.",
-  },
 
   // Shared actions
   "common.cancel": { vi: "Hủy", en: "Cancel" },

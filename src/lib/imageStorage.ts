@@ -83,3 +83,11 @@ export async function deleteBouquetImage(bouquetId: string): Promise<void> {
   transaction.objectStore(IMAGE_STORE).delete(bouquetId);
   await waitForTransaction(transaction);
 }
+
+/** Wipes every locally-stored bouquet photo. Used by the "reset data" flow. */
+export async function clearAllBouquetImages(): Promise<void> {
+  const database = await openDatabase();
+  const transaction = database.transaction(IMAGE_STORE, "readwrite");
+  transaction.objectStore(IMAGE_STORE).clear();
+  await waitForTransaction(transaction);
+}
