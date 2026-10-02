@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       admin
         .from("bouquets")
         .select(
-          "id,name,image_storage_path,received_date,occasion,custom_occasion,overall_meaning,detection_status,frame_style,created_at,updated_at"
+          "id,name,image_storage_path,image_storage_paths,received_date,occasion,custom_occasion,overall_meaning,detection_status,frame_style,created_at,updated_at"
         )
         .eq("user_id", ownerId)
         .order("created_at", { ascending: false }),
@@ -63,9 +63,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (flowersResult.error) throw flowersResult.error;
     if (placementsResult.error) throw placementsResult.error;
 
-    const imagePaths = bouquetRows
-      .map((bouquet) => bouquet.image_storage_path)
-      .filter((path): path is string => Boolean(path));
+    const pathsFor = (bouquet: {image_storage_path: string | null; image_storage_paths?: string[]}) =>
+      (bouquet.image_storage_paths?.length ? bouquet.image_storage_paths : bouquet.image_storage_path ? [bouquet.image_storage_path] : [])
+        .filter((path): path is string => typeof path === "string" && path.startsWith(`${ownerId}/`) && !path.includes(".."));
+    const imagePaths = Array.from(new Set(bouquetRows.flatMap(pathsFor)));
     const signedUrls = new Map<string, string>();
     if (imagePaths.length) {
       const { data: signedData, error: signedError } = await admin.storage
@@ -95,6 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           userId: "",
           name: bouquet.name,
           imageUrl: bouquet.image_storage_path ? signedUrls.get(bouquet.image_storage_path) ?? "" : "",
+          photos: pathsFor(bouquet).map(path => ({id: path, url: signedUrls.get(path) ?? ""})),
           receivedDate: bouquet.received_date,
           occasion: bouquet.occasion ?? undefined,
           customOccasion: bouquet.custom_occasion ?? undefined,

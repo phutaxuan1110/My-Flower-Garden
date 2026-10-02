@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Camera, Heart, MapPin, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, Heart, MapPin, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { useGarden } from "../store/GardenProvider";
 import { useToast } from "../hooks/useToast";
 import { useLanguage } from "../i18n/LanguageProvider";
@@ -10,11 +10,12 @@ import { BouquetMemoryForm } from "../components/BouquetMemoryForm";
 import type { MemoryFormState } from "../components/BouquetMemoryForm";
 import { BouquetMemoryActions } from "../components/BouquetMemoryActions";
 import { DetectedFlowerCard } from "../components/DetectedFlowerCard";
-import { ImageUploader } from "../components/ImageUploader";
-import { compressImageToDataUrl, validateImageFile, ImageValidationError } from "../lib/image";
+import { BouquetPhotoEditor } from "../components/BouquetPhotoEditor";
+import { BouquetPhotoGallery } from "../components/BouquetPhotoGallery";
+import { bouquetPhotos } from "../lib/bouquetPhotos";
 import { parseLocalDateString } from "../lib/date";
 import type { TranslationKey } from "../i18n/translations";
-import type { Occasion } from "../types";
+import type { BouquetPhoto, Occasion } from "../types";
 
 const OCCASION_KEYS: Record<Occasion, TranslationKey> = {
   Birthday: "occasion.Birthday",
@@ -41,8 +42,8 @@ export function BouquetDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [photoError, setPhotoError] = useState<string | null>(null);
-  const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
+  const [editedPhotos, setEditedPhotos] = useState<BouquetPhoto[] | null>(null);
+  const [photosBusy, setPhotosBusy] = useState(false);
   const [memory, setMemoryState] = useState<MemoryFormState>({
     name: bouquet?.name ?? "",
     receivedDate: bouquet?.receivedDate.slice(0, 10) ?? "",
@@ -66,8 +67,7 @@ export function BouquetDetailPage() {
       frameStyle: bouquet.frameStyle,
     });
     setEditableFlowers(bouquet.flowers.map((flower) => ({ ...flower })));
-    setEditedImageUrl(null);
-    setPhotoError(null);
+    setEditedPhotos(null);
     setSaveError(null);
   }
 
@@ -95,13 +95,14 @@ export function BouquetDetailPage() {
     };
 
     return (
-      editedImageUrl !== null ||
+      editedPhotos !== null ||
       JSON.stringify(memory) !== JSON.stringify(originalMemory) ||
       JSON.stringify(editableFlowers) !== JSON.stringify(bouquet.flowers)
     );
-  }, [bouquet, editedImageUrl, editableFlowers, memory]);
+  }, [bouquet, editedPhotos, editableFlowers, memory]);
 
   function requestCancelEdit() {
+    if (photosBusy || isSavingEdit) return;
     if (hasUnsavedEdit) {
       setConfirmCancelEdit(true);
     } else {
@@ -135,17 +136,6 @@ export function BouquetDetailPage() {
     );
   }
 
-  async function handlePhotoChange(file: File) {
-    setPhotoError(null);
-    try {
-      validateImageFile(file);
-      const dataUrl = await compressImageToDataUrl(file);
-      setEditedImageUrl(dataUrl);
-    } catch (err) {
-      setPhotoError(err instanceof ImageValidationError ? err.message : t("detail.notFoundBody"));
-    }
-  }
-
   async function handleDelete() {
     setIsDeleting(true);
     try {
@@ -160,7 +150,7 @@ export function BouquetDetailPage() {
 
   // Flowers and memory details may remain empty; only the bouquet name is
   // required to save edits.
-  const canSaveEdit = memory.name.trim().length > 0;
+  const canSaveEdit = memory.name.trim().length > 0 && !photosBusy;
 
   async function handleSaveEdit() {
     if (!canSaveEdit || isSavingEdit) return;
@@ -177,7 +167,7 @@ export function BouquetDetailPage() {
           giftedBy: memory.giftedBy,
           personalNote: memory.personalNote,
           frameStyle: memory.frameStyle,
-          imageUrl: editedImageUrl ?? bouquet!.imageUrl,
+          ...(editedPhotos ? { imageUrl: editedPhotos[0].url, photos: editedPhotos } : {}),
         },
         editableFlowers.map((f) => ({
           commonName: f.commonName,
@@ -191,7 +181,7 @@ export function BouquetDetailPage() {
         }))
       );
       show(t("detail.updatedToast"));
-      setEditedImageUrl(null);
+      setEditedPhotos(null);
       setIsEditing(false);
     } catch {
       setSaveError(t("gardenEdit.saveFailed"));
@@ -200,7 +190,8 @@ export function BouquetDetailPage() {
     }
   }
 
-  const displayImageUrl = editedImageUrl ?? bouquet.imageUrl;
+  const displayPhotos = isEditing && editedPhotos ? editedPhotos : bouquetPhotos(bouquet);
+  const displayImageUrl = displayPhotos[0]?.url ?? bouquet.imageUrl;
 
   return (
     <div
@@ -208,7 +199,7 @@ export function BouquetDetailPage() {
     >
       <div className="relative">
         <div className="bouquet-detail-hero w-full overflow-hidden bg-[var(--color-blush)]">
-          <img src={displayImageUrl} alt={bouquet.name} className="h-full w-full object-cover object-center" />
+          <BouquetPhotoGallery photos={displayPhotos} name={bouquet.name} />
         </div>
       </div>
 
@@ -238,13 +229,7 @@ export function BouquetDetailPage() {
       {isEditing && (
         <div className="px-5 pt-4">
           <h2 className="font-display text-lg text-[var(--color-ink)]">{t("detail.editMemoryTitle")}</h2>
-          <ImageUploader
-            onFileSelected={handlePhotoChange}
-            className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-dashed border-[var(--color-primary-strong)] px-4 text-sm font-medium text-[var(--color-rose)]"
-          >
-            <Camera size={15} /> {t("detail.changePhoto")}
-          </ImageUploader>
-          {photoError && <p className="mt-2 text-sm text-[var(--color-rose)]">{photoError}</p>}
+          <div className="mt-3"><BouquetPhotoEditor photos={displayPhotos} onChange={setEditedPhotos} disabled={isSavingEdit} onBusyChange={setPhotosBusy}/></div>
         </div>
       )}
 

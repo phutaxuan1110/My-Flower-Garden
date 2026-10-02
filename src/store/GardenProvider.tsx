@@ -18,6 +18,7 @@ import type {
 } from "../types";
 
 interface CreateBouquetInput {
+  photos?: Bouquet["photos"];
   imageUrl: string;
   name: string;
   receivedDate: string;
@@ -127,6 +128,7 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
   const createBouquet = useCallback(async (input: CreateBouquetInput) => {
     const bouquet = await gardenRepository.createBouquet({
       imageUrl: input.imageUrl,
+      photos: input.photos,
       name: input.name,
       receivedDate: input.receivedDate,
       occasion: input.occasion,

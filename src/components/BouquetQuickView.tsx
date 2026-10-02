@@ -1,3 +1,5 @@
+import { BouquetPhotoGallery } from "./BouquetPhotoGallery";
+import { bouquetPhotos } from "../lib/bouquetPhotos";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Heart, ArrowRight } from "lucide-react";
 import { useLanguage } from "../i18n/LanguageProvider";
@@ -33,11 +35,7 @@ export function BouquetQuickView({ bouquet, onClose, onOpenDetail, onToggleFavor
             className="w-full max-w-[420px] overflow-hidden rounded-t-[32px] bg-white md:rounded-[32px]"
           >
             <div className="relative aspect-[4/3] w-full overflow-hidden">
-              <img
-                src={bouquet.imageUrl}
-                alt={bouquet.name}
-                className="h-full w-full object-cover object-center"
-              />
+              <BouquetPhotoGallery photos={bouquetPhotos(bouquet)} name={bouquet.name}/>
               <button
                 type="button"
                 onClick={onClose}

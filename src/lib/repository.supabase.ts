@@ -3,6 +3,7 @@ import { supabase, BOUQUET_IMAGE_BUCKET } from "./supabaseClient";
 import type { GardenRepository } from "./repository";
 import type {
   Bouquet,
+  BouquetPhoto,
   BouquetFlower,
   GardenArea,
   GardenPlacement,
@@ -32,13 +33,34 @@ async function uploadBouquetImage(userId: string, bouquetId: string, dataUrl: st
   const res = await fetch(dataUrl);
   const blob = await res.blob();
   const ext = blob.type.split("/")[1] || "jpg";
-  const path = `${userId}/${bouquetId}.${ext}`;
+  const path = `${userId}/${bouquetId}-${makeId()}.${ext}`;
   const { error } = await supabase.storage.from(BOUQUET_IMAGE_BUCKET).upload(path, blob, {
-    upsert: true,
+    upsert: false,
     contentType: blob.type,
   });
   if (error) throw error;
   return path;
+}
+
+async function uploadPhotos(userId: string, bouquetId: string, photos: BouquetPhoto[], allowedPaths: string[]): Promise<string[]> {
+  if (!photos.length || photos.length > 10) throw new Error("A bouquet needs 1–10 photos.");
+  const uploaded: string[] = [];
+  const paths: string[] = [];
+  try {
+    for (const photo of photos) {
+      if (isDataUrl(photo.url)) {
+        const path = await uploadBouquetImage(userId, bouquetId, photo.url);
+        uploaded.push(path); paths.push(path);
+      } else if (photo.storagePath && allowedPaths.includes(photo.storagePath)) {
+        paths.push(photo.storagePath);
+      } else throw new Error("Invalid photo reference. Reload and try again.");
+    }
+    if (new Set(paths).size !== paths.length) throw new Error("Duplicate photo reference.");
+    return paths;
+  } catch (error) {
+    if (uploaded.length) await supabase.storage.from(BOUQUET_IMAGE_BUCKET).remove(uploaded).catch(() => undefined);
+    throw error;
+  }
 }
 
 async function signImageUrls(paths: (string | null | undefined)[]): Promise<Map<string, string>> {
@@ -81,6 +103,7 @@ interface BouquetRow {
   user_id: string;
   name: string;
   image_storage_path: string | null;
+  image_storage_paths?: string[];
   received_date: string;
   occasion: string | null;
   custom_occasion: string | null;
@@ -93,12 +116,16 @@ interface BouquetRow {
   created_at: string;
   updated_at: string;
 }
-function bouquetFromRow(row: BouquetRow, imageUrl: string): Bouquet {
+function rowPaths(row: BouquetRow): string[] {
+  return row.image_storage_paths?.length ? row.image_storage_paths : row.image_storage_path ? [row.image_storage_path] : [];
+}
+function bouquetFromRow(row: BouquetRow, urls: Map<string, string>): Bouquet {
   return {
     id: row.id,
     userId: row.user_id,
     name: row.name,
-    imageUrl,
+    imageUrl: (row.image_storage_path && urls.get(row.image_storage_path)) || "",
+    photos: rowPaths(row).map(path => ({ id: path, storagePath: path, url: urls.get(path) ?? "" })),
     imageStoragePath: row.image_storage_path ?? undefined,
     receivedDate: row.received_date,
     occasion: (row.occasion as Bouquet["occasion"]) ?? undefined,
@@ -223,8 +250,8 @@ export class SupabaseGardenRepository implements GardenRepository {
     const { data, error } = await supabase.from("bouquets").select("*").order("created_at", { ascending: false });
     if (error) throw error;
     const rows = (data ?? []) as BouquetRow[];
-    const urls = await signImageUrls(rows.map((r) => r.image_storage_path));
-    return rows.map((r) => bouquetFromRow(r, (r.image_storage_path && urls.get(r.image_storage_path)) || ""));
+    const urls = await signImageUrls(rows.flatMap(rowPaths));
+    return rows.map((r) => bouquetFromRow(r, urls));
   }
 
   async getBouquet(id: string): Promise<Bouquet | undefined> {
@@ -232,8 +259,8 @@ export class SupabaseGardenRepository implements GardenRepository {
     if (error) throw error;
     if (!data) return undefined;
     const row = data as BouquetRow;
-    const urls = await signImageUrls([row.image_storage_path]);
-    return bouquetFromRow(row, (row.image_storage_path && urls.get(row.image_storage_path)) || "");
+    const urls = await signImageUrls(rowPaths(row));
+    return bouquetFromRow(row, urls);
   }
 
   async createBouquet(input: Omit<Bouquet, "id" | "createdAt" | "updatedAt" | "userId">): Promise<Bouquet> {
@@ -241,10 +268,9 @@ export class SupabaseGardenRepository implements GardenRepository {
     const id = makeId();
     const ts = nowIso();
 
-    let imageStoragePath: string | null = null;
-    if (isDataUrl(input.imageUrl)) {
-      imageStoragePath = await uploadBouquetImage(userId, id, input.imageUrl);
-    }
+    const photos = input.photos ?? [{ id: makeId(), url: input.imageUrl }];
+    const imagePaths = await uploadPhotos(userId, id, photos, []);
+    const imageStoragePath = imagePaths[0];
 
     const { data, error } = await supabase
       .from("bouquets")
@@ -253,6 +279,7 @@ export class SupabaseGardenRepository implements GardenRepository {
         user_id: userId,
         name: input.name,
         image_storage_path: imageStoragePath,
+        image_storage_paths: imagePaths,
         received_date: input.receivedDate,
         occasion: input.occasion ?? null,
         custom_occasion: input.customOccasion ?? null,
@@ -270,16 +297,28 @@ export class SupabaseGardenRepository implements GardenRepository {
     if (error) throw error;
 
     const row = data as BouquetRow;
-    const urls = await signImageUrls([row.image_storage_path]);
-    return bouquetFromRow(row, (row.image_storage_path && urls.get(row.image_storage_path)) || input.imageUrl);
+    const urls = await signImageUrls(rowPaths(row));
+    return bouquetFromRow(row, urls);
   }
 
   async updateBouquet(id: string, patch: Partial<Omit<Bouquet, "id" | "userId" | "createdAt">>): Promise<Bouquet> {
     const userId = await getUserId();
     const update: Record<string, unknown> = { updated_at: nowIso() };
 
-    if (patch.imageUrl !== undefined && isDataUrl(patch.imageUrl)) {
-      update.image_storage_path = await uploadBouquetImage(userId, id, patch.imageUrl);
+    // Read persisted paths, never trust arbitrary paths supplied by a client draft.
+    const { data: existing, error: readError } = await supabase.from("bouquets").select("*").eq("id", id).single();
+    if (readError) throw readError;
+    const oldRow = existing as BouquetRow;
+    const previousPaths = rowPaths(oldRow);
+    let nextPaths = previousPaths;
+    if (patch.photos !== undefined) {
+      nextPaths = await uploadPhotos(userId, id, patch.photos, previousPaths);
+    } else if (patch.imageUrl !== undefined && isDataUrl(patch.imageUrl)) {
+      nextPaths = await uploadPhotos(userId, id, [{id: makeId(), url: patch.imageUrl}], previousPaths);
+    }
+    if (nextPaths !== previousPaths) {
+      update.image_storage_path = nextPaths[0];
+      update.image_storage_paths = nextPaths;
     }
     if (patch.name !== undefined) update.name = patch.name;
     if (patch.receivedDate !== undefined) update.received_date = patch.receivedDate;
@@ -292,20 +331,25 @@ export class SupabaseGardenRepository implements GardenRepository {
     if (patch.detectionStatus !== undefined) update.detection_status = patch.detectionStatus;
     if (patch.frameStyle !== undefined) update.frame_style = patch.frameStyle;
 
-    const { data, error } = await supabase.from("bouquets").update(update).eq("id", id).select().single();
+    const { data, error } = await supabase.from("bouquets").update(update).eq("id", id).eq("updated_at", oldRow.updated_at).select().single();
     if (error) throw error;
 
+    // Only remove replaced objects once the row commit has succeeded. A failed
+    // or ambiguous database response leaves existing images intact for retry.
+    const removed = previousPaths.filter(path => !nextPaths.includes(path));
+    if (removed.length) await supabase.storage.from(BOUQUET_IMAGE_BUCKET).remove(removed).catch(() => undefined);
     const row = data as BouquetRow;
-    const urls = await signImageUrls([row.image_storage_path]);
-    return bouquetFromRow(row, (row.image_storage_path && urls.get(row.image_storage_path)) || "");
+    const urls = await signImageUrls(rowPaths(row));
+    return bouquetFromRow(row, urls);
   }
 
   async deleteBouquet(id: string): Promise<void> {
-    const userId = await getUserId();
-    // Best-effort: try both common extensions since we don't track content-type here.
-    await supabase.storage.from(BOUQUET_IMAGE_BUCKET).remove([`${userId}/${id}.jpg`, `${userId}/${id}.png`, `${userId}/${id}.webp`]);
+    const { data: row, error: readError } = await supabase.from("bouquets").select("*").eq("id", id).single();
+    if (readError) throw readError;
     const { error } = await supabase.from("bouquets").delete().eq("id", id);
     if (error) throw error;
+    const paths = rowPaths(row as BouquetRow);
+    if (paths.length) await supabase.storage.from(BOUQUET_IMAGE_BUCKET).remove(paths).catch(() => undefined);
   }
 
   async listFlowers(bouquetId: string): Promise<BouquetFlower[]> {
@@ -509,6 +553,9 @@ export class SupabaseGardenRepository implements GardenRepository {
 
   async resetGarden(): Promise<void> {
     const userId = await getUserId();
+    const { data: photoRows, error: photosError } = await supabase.from("bouquets").select("*").eq("user_id", userId);
+    if (photosError) throw photosError;
+    const photoPaths = (photoRows as BouquetRow[]).flatMap(rowPaths);
 
     // garden_placements cascades from both bouquets and garden_areas, and
     // bouquet_flowers cascades from bouquets (see supabase/schema.sql), so
@@ -525,16 +572,10 @@ export class SupabaseGardenRepository implements GardenRepository {
       .eq("id", userId);
     if (profileError) throw profileError;
 
-    // Best-effort: also clear the person's uploaded photos from Storage.
-    // Not fatal if this fails (e.g. an already-empty folder) — the rows
-    // above are the part that actually matters for the app to feel reset.
-    try {
-      const { data: files } = await supabase.storage.from(BOUQUET_IMAGE_BUCKET).list(userId);
-      if (files && files.length > 0) {
-        await supabase.storage.from(BOUQUET_IMAGE_BUCKET).remove(files.map((f) => `${userId}/${f.name}`));
-      }
-    } catch {
-      // ignore
+    // All current album objects, including jpeg paths and more than 100 photos.
+    // Storage cleanup is best-effort after database success, never before it.
+    for (let i = 0; i < photoPaths.length; i += 100) {
+      await supabase.storage.from(BOUQUET_IMAGE_BUCKET).remove(photoPaths.slice(i, i + 100)).catch(() => undefined);
     }
   }
 }

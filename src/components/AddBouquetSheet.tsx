@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, X, Plus, Sparkles } from "lucide-react";
@@ -12,7 +12,8 @@ import { BouquetMemoryActions } from "./BouquetMemoryActions";
 import { GardenPlacementPicker } from "./GardenPlacementPicker";
 import { ErrorState } from "./ErrorState";
 import { ConfirmationDialog } from "./ConfirmationDialog";
-import { compressImageToDataUrl, validateImageFile, ImageValidationError } from "../lib/image";
+import { BouquetPhotoEditor, preparePhotos } from "./BouquetPhotoEditor";
+import { BouquetPhotoGallery } from "./BouquetPhotoGallery";
 import { todayLocalDateString } from "../lib/date";
 import { flowerAIService } from "../lib/aiService";
 import { makeId } from "../lib/id";
@@ -21,7 +22,7 @@ import { useToast } from "../hooks/useToast";
 import { useHideChromeWhen } from "../hooks/useChromeVisibility";
 import { useLanguage } from "../i18n/LanguageProvider";
 import type { TranslationKey } from "../i18n/translations";
-import type { DetectedFlower } from "../types";
+import type { BouquetPhoto, DetectedFlower } from "../types";
 
 type Step = "source" | "preview" | "analyzing" | "review" | "memory" | "placement" | "success";
 
@@ -51,7 +52,9 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
   useHideChromeWhen(true, "add-bouquet-sheet");
 
   const [step, setStep] = useState<Step>("source");
-  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<BouquetPhoto[]>([]);
+  const imageDataUrl = photos[0]?.url ?? null;
+  const compressingRef = useRef(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
@@ -76,28 +79,19 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
 
   const hasUnsavedProgress = Boolean(imageDataUrl) && step !== "success";
 
-  async function handleFileChosen(file: File) {
-    setImageError(null);
-    setCameraError(null);
+  async function handleFilesChosen(files: File[]) {
+    if (compressingRef.current) return;
+    compressingRef.current = true;
+    setImageError(null); setCameraError(null); setIsCompressing(true);
     try {
-      validateImageFile(file);
-      setIsCompressing(true);
-      const dataUrl = await compressImageToDataUrl(file);
-      setImageDataUrl(dataUrl);
+      const added = await preparePhotos(files, photos.length);
+      setPhotos(previous => [...previous, ...added]);
       setStep("preview");
-    } catch (err) {
-      if (err instanceof ImageValidationError) {
-        setImageError(err.message);
-      } else {
-        setImageError(
-          language === "vi"
-            ? "Không thể đọc ảnh này. Vui lòng thử ảnh khác."
-            : "We couldn't read that photo. Please try a different one."
-        );
-      }
-    } finally {
-      setIsCompressing(false);
-    }
+    } catch (error) {
+      setImageError(error instanceof Error && error.message === "photo-limit"
+        ? (language === "vi" ? "Mỗi bó hoa tối đa 10 ảnh." : "Up to 10 photos per bouquet.")
+        : (language === "vi" ? "Không thể thêm ảnh. Hãy chọn ảnh hợp lệ, tối đa 12 MB mỗi ảnh." : "Choose valid images up to 12 MB each."));
+    } finally { compressingRef.current = false; setIsCompressing(false); }
   }
 
   async function runAnalysis() {
@@ -149,6 +143,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
     try {
       const bouquet = await createBouquet({
         imageUrl: imageDataUrl,
+        photos,
         name: memory.name.trim(),
         receivedDate: memory.receivedDate,
         occasion: memory.occasion,
@@ -180,6 +175,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
   }
 
   function requestClose() {
+    if (isSaving || isCompressing) return;
     if (hasUnsavedProgress) {
       setConfirmDiscard(true);
     } else {
@@ -188,6 +184,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
   }
 
   function goBack() {
+    if (isSaving || isCompressing) return;
     const order: Step[] = ["source", "preview", "review", "memory"];
     const idx = order.indexOf(step);
     if (idx > 0) setStep(order[idx - 1]);
@@ -207,6 +204,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={goBack}
+              disabled={isCompressing || isSaving}
               aria-label={t("common.back")}
               className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--color-ink)]"
             >
@@ -221,6 +219,7 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={requestClose}
+            disabled={isCompressing || isSaving}
             aria-label={t("common.close")}
             className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--color-ink)]"
           >
@@ -242,10 +241,10 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
                   <p className="text-sm leading-relaxed text-[var(--color-muted)]">{t("add.source.intro")}</p>
                   <div className="mt-6 flex flex-col gap-3">
                     <CameraCapture
-                      onFileSelected={handleFileChosen}
+                      onFileSelected={file => handleFilesChosen([file])}
                       onPermissionDenied={() => setCameraError(t("add.source.cameraDenied"))}
                     />
-                    <ImageUploader onFileSelected={handleFileChosen} />
+                    <ImageUploader disabled={isCompressing} onFilesSelected={handleFilesChosen} />
                   </div>
                   {isCompressing && (
                     <p className="mt-4 text-sm text-[var(--color-muted)]">{t("add.source.preparingPhoto")}</p>
@@ -265,24 +264,15 @@ export function AddBouquetSheet({ onClose }: { onClose: () => void }) {
 
               {step === "preview" && imageDataUrl && (
                 <div className="px-5">
-                  <div className="overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-white">
-                    <img src={imageDataUrl} alt="Selected bouquet preview" className="aspect-square w-full object-cover" />
+                  <div className="aspect-square overflow-hidden rounded-[28px] border border-[var(--color-line)] bg-white">
+                    <BouquetPhotoGallery photos={photos} name={language === "vi" ? "Bó hoa mới" : "New bouquet"}/>
                   </div>
-                  <div className="mt-4 flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setImageDataUrl(null);
-                        setStep("source");
-                      }}
-                      className="min-h-[44px] flex-1 rounded-full border border-[var(--color-line)] text-sm font-medium text-[var(--color-ink)]"
-                    >
-                      {t("add.preview.changePhoto")}
-                    </button>
-                  </div>
+                  <div className="mt-4"><BouquetPhotoEditor photos={photos} onChange={setPhotos} onBusyChange={setIsCompressing}/></div>
+                  <p className="mt-3 text-xs text-[var(--color-muted)]">{language === "vi" ? "AI nhận diện hoa từ ảnh chính. Các ảnh khác được lưu trong album." : "AI identifies flowers from the cover photo. Other photos are saved in the album."}</p>
                   <button
                     type="button"
                     onClick={runAnalysis}
+                    disabled={isCompressing}
                     className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-[var(--color-rose)] text-sm font-semibold text-white shadow-md shadow-[var(--color-rose)]/30 transition-transform active:scale-95"
                   >
                     <Sparkles size={16} /> {t("add.preview.identify")}

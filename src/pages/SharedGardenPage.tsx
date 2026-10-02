@@ -1,3 +1,5 @@
+import { BouquetPhotoGallery } from "../components/BouquetPhotoGallery";
+import { bouquetPhotos } from "../lib/bouquetPhotos";
 import { generateAreaName } from "../lib/gardenNaming";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, BookOpen, Eye, Flower2, Sprout } from "lucide-react";
@@ -35,7 +37,7 @@ function SharedBouquetDetail({ bouquet, data, onBack }: {
   return (
     <div className="min-h-full pb-8">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-[var(--color-blush)]">
-        {bouquet.imageUrl && <img src={bouquet.imageUrl} alt={bouquet.name} className="h-full w-full object-cover" />}
+        <BouquetPhotoGallery photos={bouquetPhotos(bouquet)} name={bouquet.name}/>
         <button
           type="button"
           onClick={onBack}

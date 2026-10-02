@@ -37,12 +37,20 @@ export interface BouquetFlower {
   source: "ai" | "user";
 }
 
+export interface BouquetPhoto {
+  id: string;
+  url: string;
+  storagePath?: string;
+}
+
 export interface Bouquet {
   id: string;
   userId: string;
   name: string;
   imageUrl: string; // data URL for this demo; would be a storage URL in production
   imageStoragePath?: string;
+  /** Ordered gallery; first item is the primary image. Optional for legacy records. */
+  photos?: BouquetPhoto[];
   receivedDate: string; // ISO date
   occasion?: Occasion;
   customOccasion?: string;

@@ -1,3 +1,5 @@
+import { BouquetPhotoGallery } from "./BouquetPhotoGallery";
+import { bouquetPhotos } from "../lib/bouquetPhotos";
 import { Heart, MapPin } from "lucide-react";
 import { BouquetFrame } from "./BouquetFrame";
 import { useLanguage } from "../i18n/LanguageProvider";
@@ -13,6 +15,8 @@ interface BouquetCardProps {
 
 export function BouquetCard({ bouquet, onOpen, onToggleFavorite, fullBleedImage = false }: BouquetCardProps) {
   const { t } = useLanguage();
+  const photos = bouquetPhotos(bouquet);
+  const showGallery = fullBleedImage || photos.length > 1;
   const speciesLabel = bouquet.flowers
     .slice(0, 2)
     .map((f) => f.commonName)
@@ -20,42 +24,38 @@ export function BouquetCard({ bouquet, onOpen, onToggleFavorite, fullBleedImage 
 
   return (
     <div className="group relative overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-line)] bg-white shadow-sm shadow-[var(--color-rose)]/5">
-      <button type="button" onClick={onOpen} className="block w-full text-left" aria-label={bouquet.name}>
-        <div className={`relative aspect-[4/5] w-full overflow-hidden bg-[var(--color-blush)] ${fullBleedImage ? "" : "p-3"}`}>
-          {fullBleedImage ? (
-            <img
-              src={bouquet.imageUrl}
-              alt={bouquet.name}
-              className="no-native-drag no-callout absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-active:scale-105"
-              draggable={false}
-              onContextMenu={(event) => event.preventDefault()}
-            />
+      <div>
+        <div className={`relative aspect-[4/5] w-full overflow-hidden bg-[var(--color-blush)] ${showGallery ? "" : "p-3"}`}>
+          {showGallery ? (
+            <BouquetPhotoGallery photos={photos} name={bouquet.name} onOpen={onOpen}/>
           ) : (
+            <button type="button" onClick={onOpen} className="h-full w-full" aria-label={bouquet.name}>
             <BouquetFrame
               imageUrl={bouquet.imageUrl}
               frameStyle={bouquet.frameStyle}
               alt={bouquet.name}
               className="h-full w-full transition-transform duration-500 group-active:scale-105"
             />
+            </button>
           )}
           {bouquet.placement ? (
-            <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-medium text-[var(--color-ink)]">
+            <span className="pointer-events-none absolute left-2 top-2 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-medium text-[var(--color-ink)]">
               <MapPin size={11} strokeWidth={2} /> {t("collection.inGarden")}
             </span>
           ) : (
-            <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[10px] font-medium text-[var(--color-muted)]">
+            <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-white/90 px-2 py-1 text-[10px] font-medium text-[var(--color-muted)]">
               {t("collection.notPlaced")}
             </span>
           )}
         </div>
-        <div className="p-3">
+        <button type="button" onClick={onOpen} className="block w-full p-3 text-left" aria-label={bouquet.name}>
           <p className="truncate font-display text-[15px] text-[var(--color-ink)]">{bouquet.name}</p>
           <p className="mt-0.5 truncate text-xs text-[var(--color-muted)]">
             {speciesLabel || t("collection.noSpeciesYet")} ·{" "}
             {parseLocalDateString(bouquet.receivedDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
           </p>
-        </div>
-      </button>
+        </button>
+      </div>
       {onToggleFavorite && (
         <button
           type="button"
