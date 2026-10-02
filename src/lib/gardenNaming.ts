@@ -1,6 +1,6 @@
 // Auto-naming for garden areas ("maps"/"levels").
 //
-// The first two areas have fixed, hand-picked names; from area 3 onward the
+// The first three areas have fixed, hand-picked names; later areas use the
 // list below cycles through English names inspired by Greek mythology, with
 // a bias toward figures and places tied to flowers or water so they still
 // feel at home in a flower-garden app.
@@ -28,6 +28,7 @@ const GREEK_GARDEN_NAMES: string[] = [
 export function generateAreaName(order: number): string {
   if (order <= 0) return "Hera's Sacred Garden";
   if (order === 1) return "Castalian Spring";
+  if (order === 2) return "Olympus Bloom Garden";
   const idx = order - 2;
   const cycle = Math.floor(idx / GREEK_GARDEN_NAMES.length);
   const base = GREEK_GARDEN_NAMES[idx % GREEK_GARDEN_NAMES.length];

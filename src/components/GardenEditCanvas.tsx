@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { OlympusDecor } from "./OlympusDecor";
+import { OlympusSlot } from "./OlympusSlot";
 import { GardenBackdrop } from "./GardenBackdrop";
 import { BouquetFrame } from "./BouquetFrame";
 import { slotsForTheme } from "../lib/gardenLayout";
@@ -131,9 +133,9 @@ export function GardenEditCanvas({
 
       <div
         ref={canvasRef}
-        className="relative aspect-[572/1024] w-full touch-none select-none overflow-hidden rounded-[32px] border border-[var(--color-line)] bg-[var(--color-primary)]"
+        className="oly-canvas relative aspect-[572/1024] w-full touch-none select-none overflow-hidden rounded-[32px] border border-[var(--color-line)] bg-[var(--color-primary)]"
       >
-        <GardenBackdrop theme={theme} />
+        <GardenBackdrop theme={theme} editing />
         {slots.map((slot) => {
           const occupantId = occupiedBySlot.get(slot.id);
           const occupantBouquet = occupantId ? bouquetsById.get(occupantId) : undefined;
@@ -141,6 +143,13 @@ export function GardenEditCanvas({
           const isHovered = isDragging && hoveredSlotId === slot.id;
           const size = 92 * slot.scale;
 
+          if (theme === "olympus") return <OlympusSlot key={slot.id} slot={slot}
+            bouquet={isTargetHere ? targetBouquet : occupantBouquet}
+            vaseStyle={(isTargetHere ? targetBouquet.placement : otherPlacements.find(p=>p.slotId === slot.id))?.vaseStyle}
+            selected={isHovered || isTargetHere} selectable={!occupantBouquet && !isTargetHere}
+            faded={isDragging && !isHovered}
+            onTap={() => { if (!isDragging && !isTargetHere) { if (occupantId) onConflict(occupantId); else onDraftChange(slot.id); } }}
+            drag={isTargetHere ? {onPointerDown:handlePointerDown,onPointerMove:handlePointerMove,onPointerUp:endDrag,onPointerCancel:handlePointerCancel} : undefined} />;
           if (isTargetHere) {
             return (
               <button
@@ -220,6 +229,7 @@ export function GardenEditCanvas({
             />
           );
         })}
+        {theme === "olympus" && <OlympusDecor layer="front" editing />}
       </div>
 
       {ghostPos && (

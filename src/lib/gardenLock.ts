@@ -76,12 +76,11 @@ export function buildDisplayAreas(
 
   const result: DisplayGardenArea[] = unlocked.map((area) => ({
     id: area.id,
-    // Areas 1 and 2 always show their fixed names ("Hera's Sacred Garden",
-    // "Castalian Spring") regardless of what's stored — accounts created
+    // The first three areas always show their fixed names regardless of what's stored — accounts created
     // before these names existed still have the old stored value (e.g.
-    // "Garden Corner"), so the first two are always recomputed the same way
+    // "Garden Corner"), so the first three are always recomputed the same way
     // the theme is, rather than trusted from storage.
-    name: area.order <= 1 ? generateAreaName(area.order) : area.name,
+    name: area.order <= 2 ? generateAreaName(area.order) : area.name,
     // Deterministic from `order`, not the stored `theme` column: areas
     // created before the alternating garden/river scheme existed can have
     // a stale value (e.g. old default "spring") saved in the database,

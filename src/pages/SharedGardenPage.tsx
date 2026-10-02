@@ -1,3 +1,4 @@
+import { generateAreaName } from "../lib/gardenNaming";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, BookOpen, Eye, Flower2, Sprout } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -26,9 +27,10 @@ function SharedBouquetDetail({ bouquet, data, onBack }: {
   onBack: () => void;
 }) {
   const { t } = useLanguage();
-  const areaName = bouquet.placement
-    ? data.areas.find((area) => area.id === bouquet.placement?.gardenAreaId)?.name
+  const placedArea = bouquet.placement
+    ? data.areas.find((area) => area.id === bouquet.placement?.gardenAreaId)
     : null;
+  const areaName = placedArea ? (placedArea.order === 2 ? generateAreaName(2) : placedArea.name) : null;
 
   return (
     <div className="min-h-full pb-8">
@@ -208,8 +210,9 @@ export function SharedGardenPage() {
                 <div className="no-scrollbar mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5">
                   {data.areas.map((area) => (
                     <section key={area.id} className="w-full shrink-0 snap-center">
-                      <h2 className="mb-2 font-display text-sm italic text-[var(--color-muted)]">{area.name}</h2>
+                      <h2 className="mb-2 font-display text-sm italic text-[var(--color-muted)]">{area.order === 2 ? generateAreaName(2) : area.name}</h2>
                       <GardenCanvas
+          areaId={area.id}
                         placements={placements.filter((placement) => placement.gardenAreaId === area.id)}
                         bouquetsById={bouquetsById}
                         theme={themeForAreaOrder(area.order)}

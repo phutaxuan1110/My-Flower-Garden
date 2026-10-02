@@ -54,13 +54,16 @@ export function GardenUnlockGate({
     <div className="relative aspect-[572/1024] w-full overflow-hidden rounded-[32px] border border-[var(--color-line)] bg-[var(--color-primary)]">
       {/* The real garden sits underneath from the start so it's already
           there the instant the gate fades away. */}
+      <div inert={!revealed}>
       <GardenCanvas
+        areaId={areaId}
         placements={placements}
         bouquetsById={bouquetsById}
         theme={theme}
         onOpenBouquet={onOpenBouquet}
         ambientAnimation={ambientAnimation}
       />
+      </div>
 
       <AnimatePresence>
         {!revealed && (

@@ -156,6 +156,7 @@ export function GardenPlacementPicker({ bouquetId, onPlaced, onSkip }: GardenPla
 
       <div className="mt-3">
         <GardenCanvas
+          areaId={activeArea.id}
           placements={placements.filter((p) => p.gardenAreaId === activeArea.id)}
           bouquetsById={bouquetsById}
           theme={themeForAreaOrder(activeArea.order)}

@@ -34,6 +34,17 @@ export const SLOTS_RIVER: SlotDefinition[] = [
 
 // Kept for older call sites that only knew about a single layout — points at
 // the original garden layout so behavior is unchanged for area 1.
+// Exact centres of the six Olympus stone top ellipses in the 572 × 1024 SVG.
+// Unlike legacy slots these are vase-bottom anchors; OlympusSlot is shared
+// by every mode and scales its content with the scene width.
+export const SLOTS_OLYMPUS: SlotDefinition[] = [
+  { id: "slot-1", xPct: 172 / 572 * 100, yPct: 369 / 1024 * 100, scale: .82 },
+  { id: "slot-2", xPct: 400 / 572 * 100, yPct: 430 / 1024 * 100, scale: .86 },
+  { id: "slot-3", xPct: 149 / 572 * 100, yPct: 563 / 1024 * 100, scale: .92 },
+  { id: "slot-4", xPct: 423 / 572 * 100, yPct: 625 / 1024 * 100, scale: .96 },
+  { id: "slot-5", xPct: 166 / 572 * 100, yPct: 768 / 1024 * 100, scale: 1.02 },
+  { id: "slot-6", xPct: 406 / 572 * 100, yPct: 850 / 1024 * 100, scale: 1.08 },
+];
 export const SLOTS_PER_AREA: SlotDefinition[] = SLOTS_GARDEN;
 
 export const SLOTS_PER_GARDEN_AREA = SLOTS_GARDEN.length;
@@ -45,16 +56,17 @@ export const GARDEN_IMAGE_ASPECT_RATIO = "572 / 1024";
 
 // Every map/level art shares this same aspect ratio (my-flower-garden-river.png
 // was cropped to match it) so the canvas never needs to resize between areas.
-export const GARDEN_THEMES = ["garden", "river"] as const;
+export const GARDEN_THEMES = ["garden", "river", "olympus"] as const;
 export type GardenTheme = (typeof GARDEN_THEMES)[number];
 
 export function slotsForTheme(theme: string): SlotDefinition[] {
-  return theme === "river" ? SLOTS_RIVER : SLOTS_GARDEN;
+  return theme === "olympus" ? SLOTS_OLYMPUS : theme === "river" ? SLOTS_RIVER : SLOTS_GARDEN;
 }
 
 // Deterministic theme (and therefore backdrop art) for a given area order —
-// 0-based, matching GardenArea.order. Alternates between the two available
-// backdrops so consecutive maps look visually distinct.
+// 0-based, matching GardenArea.order. Olympus is reserved for order 2;
+// the original garden/river alternation is preserved for every other order.
 export function themeForAreaOrder(order: number): GardenTheme {
+  if (order === 2) return "olympus";
   return order % 2 === 0 ? "garden" : "river";
 }

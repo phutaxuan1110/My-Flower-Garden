@@ -1,3 +1,4 @@
+import { notifyPlacementSaved } from "../lib/olympusEvents";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { gardenRepository } from "../lib/repository";
 import { SLOTS_PER_AREA } from "../lib/gardenLayout";
@@ -253,6 +254,7 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
       const fresh = await gardenRepository.listPlacements();
       setPlacements(fresh);
       await materializeNextAreaIfNeeded(args.gardenAreaId, fresh);
+      notifyPlacementSaved(args.gardenAreaId, args.slotId);
       return { ok: true as const };
     },
     [bouquets, materializeNextAreaIfNeeded]
@@ -262,6 +264,8 @@ export function GardenProvider({ children }: { children: React.ReactNode }) {
     await gardenRepository.swapPlacements(bouquetIdA, bouquetIdB);
     const fresh = await gardenRepository.listPlacements();
     setPlacements(fresh);
+    const moved = fresh.find((placement) => placement.bouquetId === bouquetIdA);
+    if (moved) notifyPlacementSaved(moved.gardenAreaId, moved.slotId);
   }, []);
 
   const removePlacement = useCallback(async (bouquetId: string) => {

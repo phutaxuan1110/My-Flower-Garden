@@ -123,6 +123,7 @@ export function GardenAreaSwitcher({
             ) : (
               <div className="relative">
                 <GardenCanvas
+          areaId={area.id}
                   placements={placements.filter((p) => p.gardenAreaId === area.id)}
                   bouquetsById={bouquetsById}
                   theme={area.theme}
