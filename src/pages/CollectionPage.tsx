@@ -153,6 +153,7 @@ export function CollectionPage() {
               <BouquetCard
                 key={b.id}
                 bouquet={b}
+                fullBleedImage
                 onOpen={() => navigate(`/bouquet/${b.id}`)}
                 onToggleFavorite={() => toggleFavorite(b.id)}
               />

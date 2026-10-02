@@ -7,10 +7,11 @@ import type { BouquetWithFlowers } from "../types";
 interface BouquetCardProps {
   bouquet: BouquetWithFlowers;
   onOpen: () => void;
+  fullBleedImage?: boolean;
   onToggleFavorite?: () => void;
 }
 
-export function BouquetCard({ bouquet, onOpen, onToggleFavorite }: BouquetCardProps) {
+export function BouquetCard({ bouquet, onOpen, onToggleFavorite, fullBleedImage = false }: BouquetCardProps) {
   const { t } = useLanguage();
   const speciesLabel = bouquet.flowers
     .slice(0, 2)
@@ -20,13 +21,23 @@ export function BouquetCard({ bouquet, onOpen, onToggleFavorite }: BouquetCardPr
   return (
     <div className="group relative overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-line)] bg-white shadow-sm shadow-[var(--color-rose)]/5">
       <button type="button" onClick={onOpen} className="block w-full text-left" aria-label={bouquet.name}>
-        <div className="relative aspect-[4/5] w-full overflow-hidden bg-[var(--color-blush)] p-3">
-          <BouquetFrame
-            imageUrl={bouquet.imageUrl}
-            frameStyle={bouquet.frameStyle}
-            alt={bouquet.name}
-            className="h-full w-full transition-transform duration-500 group-active:scale-105"
-          />
+        <div className={`relative aspect-[4/5] w-full overflow-hidden bg-[var(--color-blush)] ${fullBleedImage ? "" : "p-3"}`}>
+          {fullBleedImage ? (
+            <img
+              src={bouquet.imageUrl}
+              alt={bouquet.name}
+              className="no-native-drag no-callout absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-active:scale-105"
+              draggable={false}
+              onContextMenu={(event) => event.preventDefault()}
+            />
+          ) : (
+            <BouquetFrame
+              imageUrl={bouquet.imageUrl}
+              frameStyle={bouquet.frameStyle}
+              alt={bouquet.name}
+              className="h-full w-full transition-transform duration-500 group-active:scale-105"
+            />
+          )}
           {bouquet.placement ? (
             <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[10px] font-medium text-[var(--color-ink)]">
               <MapPin size={11} strokeWidth={2} /> {t("collection.inGarden")}
